@@ -1,11 +1,11 @@
 package net.banking.customerservice.customer;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -18,8 +18,8 @@ class CustomerController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    List<CustomerDtoResponse> findAllCustomer(){
-        return service.getAllCustomers();
+    Page<CustomerDtoResponse> findAllCustomer(Pageable pageable){
+        return service.getAllCustomers(pageable);
     }
 
     @GetMapping("/{identity}")
@@ -31,6 +31,16 @@ class CustomerController {
     @PostMapping
     ResponseEntity<String> saveCustomer(@RequestBody @Valid CustomerDtoRequest request){
         service.createNewCustomer(request);
-        return new ResponseEntity<>(String.format("Le client identifié par l'identité [%s] a été créé avec succès.",request.identity()),HttpStatus.CREATED);
+        return new ResponseEntity<>(String.format("Le client identifié par l'identité [%s] a été créé avec succès",request.identity()),HttpStatus.CREATED);
+    }
+    @PutMapping("/{identity}")
+    ResponseEntity<String> editCustomer(@PathVariable String identity,@RequestBody @Valid UpdateCustomerDto request){
+        service.updateExistingCustomer(identity, request);
+        return new ResponseEntity<>(String.format("Le client identifié par l'identité [%s] a été modifié avec succès",identity),HttpStatus.ACCEPTED);
+    }
+    @DeleteMapping("/{identity}")
+    ResponseEntity<CustomerDtoResponse> removeCustomer(@PathVariable String identity){
+        service.deleteCustomerByIdentity(identity);
+        return ResponseEntity.noContent().build();
     }
 }

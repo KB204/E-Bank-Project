@@ -1,9 +1,12 @@
 package net.banking.customerservice.customer;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 interface CustomerService {
-    List<CustomerDtoResponse> getAllCustomers();
+    Page<CustomerDtoResponse> getAllCustomers(Pageable pageable);
     CustomerDtoResponse getCustomerByIdentity(String identity);
     void createNewCustomer(CustomerDtoRequest request);
+    void updateExistingCustomer(String identity,UpdateCustomerDto request);
+    void deleteCustomerByIdentity(String identity);
 }
