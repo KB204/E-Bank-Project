@@ -4,8 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -19,16 +19,19 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @DataMongoTest
 @Testcontainers
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class CustomerRepositoryTest {
     @Container
-    @ServiceConnection
-    static MongoDBContainer container = new MongoDBContainer("mongo:4.4.14-rc0-focal");
+    static MongoDBContainer container = new MongoDBContainer("mongo:8.0");
     @Autowired
     CustomerRepository repository;
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.uri", container::getReplicaSetUrl);
+    }
     List<Customer> customers = new ArrayList<>();
     @BeforeEach
     void setUp() {
+        repository.deleteAll();
         System.out.println("-------------------------------------------");
         customers = List.of(
                 Customer.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com")

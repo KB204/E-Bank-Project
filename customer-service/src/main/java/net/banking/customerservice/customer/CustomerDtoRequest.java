@@ -3,9 +3,10 @@ package net.banking.customerservice.customer;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 
 import java.time.LocalDate;
-
+@Builder
 record CustomerDtoRequest(
         @NotEmpty(message = "Le prénom est obligatoire")
         String firstname,
