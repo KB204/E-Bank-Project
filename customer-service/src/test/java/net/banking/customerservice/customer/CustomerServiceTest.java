@@ -1,6 +1,5 @@
 package net.banking.customerservice.customer;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -95,6 +94,7 @@ class CustomerServiceTest {
                 .birth(LocalDate.of(2020,2,25)).build();
         Mockito.when(repository.findByIdentityIgnoreCase(identity)).thenReturn(Optional.of(customer));
         Mockito.when(mapper.customerToDtoResponse(customer)).thenReturn(customerDTO);
+
         CustomerDtoResponse response = underTest.getCustomerByIdentity(identity);
         assertThat(response).isNotNull();
         assertThat(customerDTO).usingRecursiveComparison().isEqualTo(response);
@@ -107,12 +107,37 @@ class CustomerServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
     @Test
-    @Disabled
-    void updateExistingCustomer() {
-    }
+    void shouldUpdateExistingCustomerByIdentity() {
+        String identity = "RG45";
+        UpdateCustomerDto customerDTO = UpdateCustomerDto.builder()
+                .email("karim@gmail.com").address("Tanger")
+                .build();
+        Customer customer = Customer.builder()
+                .email("karim@gmail.com").address("Tanger")
+                .build();
+        Mockito.when(repository.findByIdentityIgnoreCase(identity)).thenReturn(Optional.of(customer));
+        Mockito.when(repository.save(customer)).thenReturn(customer);
 
+        underTest.updateExistingCustomer(identity,customerDTO);
+        assertThat(customerDTO).isNotNull();
+    }
     @Test
-    @Disabled
-    void deleteCustomerByIdentity() {
+    void shouldDeleteCustomerByIdentity() {
+        String identity = "TT";
+        Customer customer = Customer.builder()
+                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .birth(LocalDate.of(2020,2,25))
+                .build();
+        Mockito.when(repository.findByIdentityIgnoreCase(identity)).thenReturn(Optional.of(customer));
+
+        underTest.deleteCustomerByIdentity(identity);
+        Mockito.verify(repository).delete(customer);
+    }
+    @Test
+    void shouldNotDeleteCustomerByIdentity(){
+        String identity = "TT";
+        Mockito.when(repository.findByIdentityIgnoreCase(identity)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> underTest.deleteCustomerByIdentity(identity))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

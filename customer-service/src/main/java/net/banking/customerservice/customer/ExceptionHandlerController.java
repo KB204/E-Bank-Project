@@ -31,7 +31,7 @@ class ExceptionHandlerController extends ResponseEntityExceptionHandler {
         List<String> details = new ArrayList<>();
         details.add(ex.getLocalizedMessage());
         ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
     @ExceptionHandler(ResourceAlreadyExists.class)
     final ResponseEntity<Object> handleResourceAlreadyExistsException(ResourceAlreadyExists ex) {

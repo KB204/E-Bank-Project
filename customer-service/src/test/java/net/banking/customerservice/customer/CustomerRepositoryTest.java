@@ -11,7 +11,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,12 +27,12 @@ class CustomerRepositoryTest {
     static void setProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.mongodb.uri", container::getReplicaSetUrl);
     }
-    List<Customer> customers = new ArrayList<>();
+    List<Customer> customers;
     @BeforeEach
     void setUp() {
         repository.deleteAll();
         System.out.println("-------------------------------------------");
-        customers = List.of(
+        this.customers = List.of(
                 Customer.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com")
                         .birth(LocalDate.of(2002,11,28)).address("rabat").build(),
                 Customer.builder().firstname("med").lastname("bammou").identity("Test1").email("med@gmail.com")
