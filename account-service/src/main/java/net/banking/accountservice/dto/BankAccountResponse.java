@@ -1,9 +1,11 @@
-package net.banking.accountservice.bankaccount;
+package net.banking.accountservice.dto;
+
+import net.banking.accountservice.enums.AccountStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-record BankAccountResponse(
+public record BankAccountResponse(
         Long id,
         String rib,
         Double balance,

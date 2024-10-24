@@ -1,4 +1,4 @@
-package net.banking.accountservice.bankaccount;
+package net.banking.accountservice.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -7,12 +7,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.banking.accountservice.transactions.BankAccountTransaction;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 @Getter
 @Setter
 @PrimaryKeyJoinColumn(name = "id")

@@ -1,11 +1,12 @@
-package net.banking.accountservice.transactions;
+package net.banking.accountservice.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.banking.accountservice.bankaccount.CurrentAccount;
-import net.banking.accountservice.bankaccount.Customer;
+import net.banking.accountservice.enums.TransactionType;
+import net.banking.accountservice.model.CurrentAccount;
+import net.banking.accountservice.dto.Customer;
 
 import java.time.LocalDateTime;
 @NoArgsConstructor

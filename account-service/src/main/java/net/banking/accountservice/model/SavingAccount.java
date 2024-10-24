@@ -1,18 +1,18 @@
-package net.banking.accountservice.bankaccount;
+package net.banking.accountservice.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import lombok.*;
-
-import java.util.List;
+import lombok.experimental.SuperBuilder;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 @Getter
 @Setter
 @PrimaryKeyJoinColumn(name = "id")
 @Entity
-class SavingAccount extends BankAccount{
+public class SavingAccount extends BankAccount{
     private Double interest;
     private Double withDrawLimit;
 }
