@@ -1,10 +1,7 @@
 package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
-import net.banking.accountservice.dto.BankAccountResponse;
-import net.banking.accountservice.dto.CurrentAccountRequest;
-import net.banking.accountservice.dto.Customer;
-import net.banking.accountservice.dto.SavingAccountRequest;
+import net.banking.accountservice.dto.*;
 import net.banking.accountservice.enums.AccountStatus;
 import net.banking.accountservice.exceptions.ResourceAlreadyExists;
 import net.banking.accountservice.exceptions.ResourceNotFoundException;
@@ -40,6 +37,32 @@ public class BankAccountServiceImpl implements BankAccountService {
                 })
                 .toList();
     }
+    @Override
+    public List<CurrentAccountResponse> getAllCurrentAccounts() {
+        return bankAccountRepository.findAll()
+                .stream()
+                .filter(bankAccount -> bankAccount instanceof CurrentAccount)
+                .map(bankAccount -> {
+                    CurrentAccount currentAccount = (CurrentAccount) bankAccount;
+                    currentAccount.setCustomer(rest.getCustomerByIdentity(currentAccount.getCustomerIdentity()));
+                    return mapper.currentAccountToDtoResponse(currentAccount);
+                })
+                .toList();
+    }
+
+    @Override
+    public List<SavingAccountResponse> getAllSavingAccounts() {
+        return bankAccountRepository.findAll()
+                .stream()
+                .filter(bankAccount -> bankAccount instanceof SavingAccount)
+                .map(bankAccount -> {
+                    SavingAccount savingAccount = (SavingAccount) bankAccount;
+                    savingAccount.setCustomer(rest.getCustomerByIdentity(savingAccount.getCustomerIdentity()));
+                    return mapper.savingAccountToDtoResponse(savingAccount);
+                })
+                .toList();
+    }
+
     @Override
     public void createNewCurrentAccount(CurrentAccountRequest request) {
             Customer customer = rest.getCustomerByIdentity(request.identity());

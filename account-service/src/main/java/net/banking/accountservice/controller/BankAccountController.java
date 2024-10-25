@@ -1,9 +1,7 @@
 package net.banking.accountservice.controller;
 
 import jakarta.validation.Valid;
-import net.banking.accountservice.dto.BankAccountResponse;
-import net.banking.accountservice.dto.CurrentAccountRequest;
-import net.banking.accountservice.dto.SavingAccountRequest;
+import net.banking.accountservice.dto.*;
 import net.banking.accountservice.service.BankAccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +21,12 @@ public class BankAccountController {
     public List<BankAccountResponse> findAllAccounts(){
         return bankAccountService.getAllBankAccounts();
     }
+    @GetMapping("/allCurrentAccounts")
+    @ResponseStatus(HttpStatus.OK)
+    public List<CurrentAccountResponse> findAllCurrentAccounts() { return bankAccountService.getAllCurrentAccounts(); }
+    @GetMapping("/allSavingAccounts")
+    @ResponseStatus(HttpStatus.OK)
+    public List<SavingAccountResponse> findAllSavingAccounts() { return bankAccountService.getAllSavingAccounts(); }
     @PostMapping("/newCurrentAccount")
     public ResponseEntity<String> saveNewCurrentAccount(@RequestBody @Valid CurrentAccountRequest request) {
         bankAccountService.createNewCurrentAccount(request);
