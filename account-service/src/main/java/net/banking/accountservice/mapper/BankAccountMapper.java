@@ -1,9 +1,9 @@
 package net.banking.accountservice.mapper;
 
-import net.banking.accountservice.dto.CurrentAccountResponse;
-import net.banking.accountservice.dto.SavingAccountResponse;
+import net.banking.accountservice.dto.currentaccount.CurrentAccountResponse;
+import net.banking.accountservice.dto.savingaccount.SavingAccountResponse;
 import net.banking.accountservice.model.BankAccount;
-import net.banking.accountservice.dto.BankAccountResponse;
+import net.banking.accountservice.dto.bankaccount.BankAccountResponse;
 import net.banking.accountservice.dto.Customer;
 import net.banking.accountservice.model.CurrentAccount;
 import net.banking.accountservice.model.SavingAccount;

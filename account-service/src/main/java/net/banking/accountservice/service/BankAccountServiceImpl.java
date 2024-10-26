@@ -2,6 +2,11 @@ package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
 import net.banking.accountservice.dto.*;
+import net.banking.accountservice.dto.bankaccount.BankAccountResponse;
+import net.banking.accountservice.dto.currentaccount.CurrentAccountRequest;
+import net.banking.accountservice.dto.currentaccount.CurrentAccountResponse;
+import net.banking.accountservice.dto.savingaccount.SavingAccountRequest;
+import net.banking.accountservice.dto.savingaccount.SavingAccountResponse;
 import net.banking.accountservice.enums.AccountStatus;
 import net.banking.accountservice.exceptions.ResourceAlreadyExists;
 import net.banking.accountservice.exceptions.ResourceNotFoundException;
@@ -65,7 +70,7 @@ public class BankAccountServiceImpl implements BankAccountService {
 
     @Override
     public void createNewCurrentAccount(CurrentAccountRequest request) {
-            Customer customer = rest.getCustomerByIdentity(request.identity());
+            Customer customer = rest.findCustomer(request.identity());
             CurrentAccount currentAccount = CurrentAccount.builder()
                     .rib(UUID.randomUUID().toString().substring(0,8))
                     .createdAt(LocalDateTime.now())
@@ -79,13 +84,13 @@ public class BankAccountServiceImpl implements BankAccountService {
                     .build();
             bankAccountRepository.findByRibIgnoreCase(currentAccount.getRib())
                     .ifPresent(bankAccount -> {
-                        throw new ResourceAlreadyExists("Compte exits déja");
+                        throw new ResourceAlreadyExists("Compte déjà existant avec ce RIB");
                     });
             bankAccountRepository.save(currentAccount);
     }
     @Override
     public void createNewSavingAccount(SavingAccountRequest request) {
-        Customer customer = rest.getCustomerByIdentity(request.identity());
+        Customer customer = rest.findCustomer(request.identity());
         SavingAccount savingAccount = SavingAccount.builder()
                 .rib(UUID.randomUUID().toString().substring(0,8))
                 .createdAt(LocalDateTime.now())
@@ -99,7 +104,7 @@ public class BankAccountServiceImpl implements BankAccountService {
                 .build();
         bankAccountRepository.findByRibIgnoreCase(savingAccount.getRib())
                 .ifPresent(bankAccount -> {
-                    throw new ResourceAlreadyExists("Compte exits déja");
+                    throw new ResourceAlreadyExists("Compte déjà existant avec ce RIB");
                 });
         bankAccountRepository.save(savingAccount);
     }

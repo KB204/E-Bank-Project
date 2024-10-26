@@ -1,4 +1,4 @@
-package net.banking.accountservice.dto;
+package net.banking.accountservice.dto.savingaccount;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;

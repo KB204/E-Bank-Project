@@ -1,5 +1,6 @@
-package net.banking.accountservice.dto;
+package net.banking.accountservice.dto.currentaccount;
 
+import net.banking.accountservice.dto.Customer;
 import net.banking.accountservice.enums.AccountStatus;
 
 import java.time.LocalDateTime;

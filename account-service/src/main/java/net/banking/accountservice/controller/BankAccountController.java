@@ -1,7 +1,11 @@
 package net.banking.accountservice.controller;
 
 import jakarta.validation.Valid;
-import net.banking.accountservice.dto.*;
+import net.banking.accountservice.dto.bankaccount.BankAccountResponse;
+import net.banking.accountservice.dto.currentaccount.CurrentAccountRequest;
+import net.banking.accountservice.dto.currentaccount.CurrentAccountResponse;
+import net.banking.accountservice.dto.savingaccount.SavingAccountRequest;
+import net.banking.accountservice.dto.savingaccount.SavingAccountResponse;
 import net.banking.accountservice.service.BankAccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

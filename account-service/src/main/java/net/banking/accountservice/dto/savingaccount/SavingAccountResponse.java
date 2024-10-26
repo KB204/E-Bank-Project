@@ -1,11 +1,12 @@
-package net.banking.accountservice.dto;
+package net.banking.accountservice.dto.savingaccount;
 
+import net.banking.accountservice.dto.Customer;
 import net.banking.accountservice.enums.AccountStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record BankAccountResponse(
+public record SavingAccountResponse(
         Long id,
         String rib,
         Double balance,
@@ -14,4 +15,6 @@ public record BankAccountResponse(
         LocalDateTime createdAt,
         AccountStatus accountStatus,
         List<Customer> customer,
-        String customerIdentity) {}
+        String customerIdentity,
+        Double interest,
+        Double withDrawLimit) {}
