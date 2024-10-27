@@ -2,6 +2,7 @@ package net.banking.accountservice.controller;
 
 import feign.FeignException;
 import net.banking.accountservice.dto.ErrorResponse;
+import net.banking.accountservice.exceptions.BankAccountException;
 import net.banking.accountservice.exceptions.ResourceAlreadyExists;
 import net.banking.accountservice.exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -45,11 +46,18 @@ public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler(FeignException.class)
-    public ResponseEntity<Object> handleFeignException(FeignException ex) {
+    final ResponseEntity<Object> handleFeignException(FeignException ex) {
         List<String> details = new ArrayList<>();
         details.add("Impossible de se connecter au service client. Veuillez réessayer plus tard");
         ErrorResponse error = new ErrorResponse("Erreurs techniques", details);
         return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+    @ExceptionHandler(BankAccountException.class)
+    final ResponseEntity<Object> handleBankAccountException(BankAccountException ex) {
+        List<String> details = new ArrayList<>();
+        details.add(ex.getLocalizedMessage());
+        ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler(Exception.class)
     final ResponseEntity<Object> handleOtherExceptions(Exception ex) {
