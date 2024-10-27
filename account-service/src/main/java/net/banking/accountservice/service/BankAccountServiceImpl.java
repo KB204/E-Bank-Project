@@ -3,6 +3,7 @@ package net.banking.accountservice.service;
 import net.banking.accountservice.client.CustomerRest;
 import net.banking.accountservice.dto.*;
 import net.banking.accountservice.dto.bankaccount.BankAccountResponse;
+import net.banking.accountservice.dto.bankaccount.ChangeAccountStatus;
 import net.banking.accountservice.dto.currentaccount.CurrentAccountRequest;
 import net.banking.accountservice.dto.currentaccount.CurrentAccountResponse;
 import net.banking.accountservice.dto.savingaccount.SavingAccountRequest;
@@ -13,11 +14,16 @@ import net.banking.accountservice.exceptions.ResourceNotFoundException;
 import net.banking.accountservice.mapper.BankAccountMapper;
 import net.banking.accountservice.model.*;
 import net.banking.accountservice.repository.BankAccountRepository;
+import net.banking.accountservice.service.specification.BankAccountSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -33,39 +39,52 @@ public class BankAccountServiceImpl implements BankAccountService {
         this.rest = rest;
     }
     @Override
-    public List<BankAccountResponse> getAllBankAccounts() {
-        return bankAccountRepository.findAll()
-                .stream()
+    public Page<BankAccountResponse> getAllBankAccounts(String rib, String branch, String accountStatus,
+                                                        String identity, Pageable pageable) {
+        Specification<BankAccount> specification = Specification.where(BankAccountSpecification.filterWithoutConditions())
+                .and(BankAccountSpecification.ribEqual(rib))
+                .and(BankAccountSpecification.branchLike(branch))
+                .and(BankAccountSpecification.statusEqual(accountStatus))
+                .and(BankAccountSpecification.customerIdentityEqual(identity));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").descending());
+        return bankAccountRepository.findAll(specification,pageable)
                 .map(bankAccount -> {
                     bankAccount.setCustomer(rest.getCustomerByIdentity(bankAccount.getCustomerIdentity()));
                     return mapper.bankAccountToDtoResponse(bankAccount);
-                })
-                .toList();
+                });
     }
     @Override
-    public List<CurrentAccountResponse> getAllCurrentAccounts() {
-        return bankAccountRepository.findAll()
-                .stream()
-                .filter(bankAccount -> bankAccount instanceof CurrentAccount)
+    public Page<CurrentAccountResponse> getAllCurrentAccounts(String rib, String branch, String accountStatus,
+                                                              String identity, Pageable pageable) {
+        Specification<BankAccount> specification = Specification.where(BankAccountSpecification.currentAccountsOnly())
+                .and(BankAccountSpecification.ribEqual(rib))
+                .and(BankAccountSpecification.branchLike(branch))
+                .and(BankAccountSpecification.statusEqual(accountStatus))
+                .and(BankAccountSpecification.customerIdentityEqual(identity));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").descending());
+        return bankAccountRepository.findAll(specification,pageable)
                 .map(bankAccount -> {
                     CurrentAccount currentAccount = (CurrentAccount) bankAccount;
                     currentAccount.setCustomer(rest.getCustomerByIdentity(currentAccount.getCustomerIdentity()));
                     return mapper.currentAccountToDtoResponse(currentAccount);
-                })
-                .toList();
+                });
     }
 
     @Override
-    public List<SavingAccountResponse> getAllSavingAccounts() {
-        return bankAccountRepository.findAll()
-                .stream()
-                .filter(bankAccount -> bankAccount instanceof SavingAccount)
+    public Page<SavingAccountResponse> getAllSavingAccounts(String rib, String branch, String accountStatus,
+                                                            String identity, Pageable pageable) {
+        Specification<BankAccount> specification = Specification.where(BankAccountSpecification.savingAccountOnly())
+                .and(BankAccountSpecification.ribEqual(rib))
+                .and(BankAccountSpecification.branchLike(branch))
+                .and(BankAccountSpecification.statusEqual(accountStatus))
+                .and(BankAccountSpecification.customerIdentityEqual(identity));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").descending());
+        return bankAccountRepository.findAll(specification,pageable)
                 .map(bankAccount -> {
                     SavingAccount savingAccount = (SavingAccount) bankAccount;
                     savingAccount.setCustomer(rest.getCustomerByIdentity(savingAccount.getCustomerIdentity()));
                     return mapper.savingAccountToDtoResponse(savingAccount);
-                })
-                .toList();
+                });
     }
 
     @Override
@@ -107,6 +126,12 @@ public class BankAccountServiceImpl implements BankAccountService {
                     throw new ResourceAlreadyExists("Compte déjà existant avec ce RIB");
                 });
         bankAccountRepository.save(savingAccount);
+    }
+    public void changeAccountStatus(String rib, ChangeAccountStatus request){
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
+                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
+        bankAccount.setAccountStatus(request.status());
+        bankAccountRepository.save(bankAccount);
     }
     @Override
     public void deleteBankAccount(Long id) {
