@@ -9,8 +9,9 @@ import net.banking.accountservice.enums.TransactionType;
 import net.banking.accountservice.exceptions.BankAccountException;
 import net.banking.accountservice.exceptions.ResourceNotFoundException;
 import net.banking.accountservice.mapper.OperationMapper;
+import net.banking.accountservice.model.BankAccount;
 import net.banking.accountservice.model.BankAccountTransaction;
-import net.banking.accountservice.model.CurrentAccount;
+import net.banking.accountservice.model.SavingAccount;
 import net.banking.accountservice.repository.BankAccountRepository;
 import net.banking.accountservice.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,10 @@ public class OperationServiceImpl implements OperationService{
     public List<OperationResponse> getAllOperations() {
         return transactionRepository.findAll()
                 .stream()
-                .map(mapper::operationToDtoResponse)
+                .map(operation -> {
+                    operation.setCustomer(rest.getCustomerByIdentity(operation.getCustomer().identity()));
+                    return mapper.operationToDtoResponse(operation);
+                })
                 .toList();
     }
     @Override
@@ -47,28 +51,30 @@ public class OperationServiceImpl implements OperationService{
         BankAccountTransaction transactionFrom = BankAccountTransaction.builder()
                 .amount(request.amount())
                 .transactionType(TransactionType.DEBIT)
-                .currentAccount(CurrentAccount.builder().rib(request.ribFrom()).build())
+                .bankAccount(BankAccount.builder().rib(request.ribFrom()).build())
+                .motif(request.motif())
                 .customer(rest.findCustomer(request.senderIdentity()))
                 .build();
 
         BankAccountTransaction transactionTo = BankAccountTransaction.builder()
                 .amount(request.amount())
                 .transactionType(TransactionType.CREDIT)
-                .currentAccount(CurrentAccount.builder().rib(request.ribTo()).build())
+                .bankAccount(BankAccount.builder().rib(request.ribTo()).build())
                 .customer(rest.findCustomer(request.receiverIdentity()))
                 .build();
 
-        String ribFrom = transactionFrom.getCurrentAccount().getRib();
-        String ribTo = transactionTo.getCurrentAccount().getRib();
+        String ribFrom = transactionFrom.getBankAccount().getRib();
+        String ribTo = transactionTo.getBankAccount().getRib();
         Double amount = transactionFrom.getAmount();
+        String motif = transactionFrom.getMotif();
         String customerSender = transactionFrom.getCustomer().identity();
         String customerReceiver = transactionTo.getCustomer().identity();
 
         Customer customer = rest.findCustomer(customerSender);
         Customer customer2 = rest.findCustomer(customerReceiver);
-        CurrentAccount bankAccountFrom = bankAccountRepository.findByRib(ribFrom)
+        BankAccount bankAccountFrom = bankAccountRepository.findByRib(ribFrom)
                 .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas "+ribFrom));
-        CurrentAccount bankAccountTo = bankAccountRepository.findByRib(ribTo)
+        BankAccount bankAccountTo = bankAccountRepository.findByRib(ribTo)
                 .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas "+ribTo));
 
         checkBusinessRules(bankAccountFrom,bankAccountTo,amount);
@@ -77,19 +83,21 @@ public class OperationServiceImpl implements OperationService{
         bankAccountTo.setBalance(bankAccountTo.getBalance() + amount);
 
         transactionFrom.setCreatedAt(LocalDateTime.now());
-        transactionFrom.setDescription("Virement en faveur de "+customerReceiver);
-        transactionFrom.setCurrentAccount(bankAccountFrom);
+        transactionFrom.setDescription("Virement en faveur du client identifié par "+customerReceiver);
+        transactionFrom.setMotif(motif);
+        transactionFrom.setBankAccount(bankAccountFrom);
         transactionFrom.setCustomer(customer);
 
         transactionTo.setCreatedAt(LocalDateTime.now());
-        transactionTo.setDescription("Virement reçu de "+customerSender);
-        transactionTo.setCurrentAccount(bankAccountTo);
+        transactionTo.setDescription("Virement reçu du client identifié par "+customerSender);
+        transactionTo.setMotif(motif);
+        transactionTo.setBankAccount(bankAccountTo);
         transactionTo.setCustomer(customer2);
 
         transactionRepository.save(transactionFrom);
         transactionRepository.save(transactionTo);
     }
-    private void checkBusinessRules(CurrentAccount bankAccountFrom,CurrentAccount bankAccountTo,Double amount){
+    private void checkBusinessRules(BankAccount bankAccountFrom,BankAccount bankAccountTo,Double amount){
         if (bankAccountFrom.getAccountStatus().equals(AccountStatus.CLOSED))
             throw new BankAccountException(String.format("Le compte identifié par %s est clôturé",bankAccountFrom.getRib()));
         if (bankAccountFrom.getAccountStatus().equals(AccountStatus.BLOCKED))
@@ -102,5 +110,8 @@ public class OperationServiceImpl implements OperationService{
             throw new BankAccountException("Le solde du compte est inférieur au montant souhaité à envoyer");
         if (bankAccountFrom.getRib().equals(bankAccountTo.getRib()))
             throw new BankAccountException("Le compte source ne peut pas être le même que la destination");
+        if (bankAccountFrom instanceof SavingAccount){
+            throw new BankAccountException("Vous ne pouvez pas effectuer un virement a partir d'un compte epargne");
+        }
     }
 }

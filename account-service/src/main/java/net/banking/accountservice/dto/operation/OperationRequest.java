@@ -10,6 +10,8 @@ public record OperationRequest(
         String ribTo,
         @NotNull(message = "Le montant de l'opération est obligatoire")
         Double amount,
+        @NotEmpty(message = "Le motif est obligatoire")
+        String motif,
         @NotEmpty(message = "L'identité de l'expéditeur est obligatoire")
         String senderIdentity,
         @NotEmpty(message = "L'identité du bénéficiaire est obligatoire")

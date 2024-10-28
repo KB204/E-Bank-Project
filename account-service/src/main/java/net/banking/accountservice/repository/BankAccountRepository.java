@@ -9,5 +9,5 @@ import java.util.Optional;
 
 public interface BankAccountRepository extends JpaRepository<BankAccount,Long> , JpaSpecificationExecutor<BankAccount> {
     Optional<BankAccount> findByRibIgnoreCase(String rib);
-    Optional<CurrentAccount> findByRib(String rib);
+    Optional<BankAccount> findByRib(String rib);
 }

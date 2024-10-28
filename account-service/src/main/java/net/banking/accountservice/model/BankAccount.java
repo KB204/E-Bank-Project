@@ -9,13 +9,15 @@ import net.banking.accountservice.dto.Customer;
 import net.banking.accountservice.enums.AccountStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @SuperBuilder
 @Inheritance(strategy = InheritanceType.JOINED)
 @Entity
-public abstract class BankAccount {
+public class BankAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -29,4 +31,6 @@ public abstract class BankAccount {
     @Transient
     private Customer customer;
     private String customerIdentity;
+    @OneToMany(mappedBy = "bankAccount")
+    private List<BankAccountTransaction> transactions;
 }
