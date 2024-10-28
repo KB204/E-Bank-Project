@@ -4,7 +4,6 @@ import net.banking.accountservice.dto.Customer;
 import net.banking.accountservice.enums.AccountStatus;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record BankAccountResponse(
         Long id,
@@ -14,5 +13,5 @@ public record BankAccountResponse(
         String branch,
         LocalDateTime createdAt,
         AccountStatus accountStatus,
-        List<Customer> customer,
+        Customer customer,
         String customerIdentity) {}

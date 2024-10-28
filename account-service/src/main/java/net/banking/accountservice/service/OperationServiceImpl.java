@@ -1,7 +1,6 @@
 package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
-import net.banking.accountservice.dto.Customer;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
 import net.banking.accountservice.enums.AccountStatus;
@@ -14,11 +13,16 @@ import net.banking.accountservice.model.BankAccountTransaction;
 import net.banking.accountservice.model.SavingAccount;
 import net.banking.accountservice.repository.BankAccountRepository;
 import net.banking.accountservice.repository.TransactionRepository;
+import net.banking.accountservice.service.specification.OperationSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @Transactional
@@ -36,14 +40,22 @@ public class OperationServiceImpl implements OperationService{
     }
 
     @Override
-    public List<OperationResponse> getAllOperations() {
-        return transactionRepository.findAll()
-                .stream()
+    public Page<OperationResponse> getAllOperations(Double amount, Double amount2, String transactionType, String rib, String customerIdentity,
+                                                    LocalDateTime startDate, LocalDateTime endDate, String createdAt, Pageable pageable) {
+        Specification<BankAccountTransaction> specification = Specification.where(OperationSpecification.filterWithoutConditions())
+                .and(OperationSpecification.amountEqual(amount))
+                .and(OperationSpecification.amountBetween(amount,amount2))
+                .and(OperationSpecification.transactionTypeEqual(transactionType))
+                .and(OperationSpecification.ribEqual(rib))
+                .and(OperationSpecification.customerEqual(customerIdentity))
+                .and(OperationSpecification.transactionDateBetween(startDate,endDate))
+                .and(OperationSpecification.transactionDateLike(createdAt));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize() , Sort.by("createdAt").descending());
+        return transactionRepository.findAll(specification,pageable)
                 .map(operation -> {
-                    operation.setCustomer(rest.getCustomerByIdentity(operation.getCustomer().identity()));
+                    operation.setCustomer(rest.getCustomerByIdentity(operation.getBankAccount().getCustomerIdentity()));
                     return mapper.operationToDtoResponse(operation);
-                })
-                .toList();
+                });
     }
     @Override
     public void transferOperation(OperationRequest request) {
@@ -51,31 +63,33 @@ public class OperationServiceImpl implements OperationService{
         BankAccountTransaction transactionFrom = BankAccountTransaction.builder()
                 .amount(request.amount())
                 .transactionType(TransactionType.DEBIT)
-                .bankAccount(BankAccount.builder().rib(request.ribFrom()).build())
+                .bankAccount(BankAccount.builder()
+                        .rib(request.ribFrom())
+                        .customerIdentity(request.senderIdentity())
+                        .build())
                 .motif(request.motif())
-                .customer(rest.findCustomer(request.senderIdentity()))
                 .build();
 
         BankAccountTransaction transactionTo = BankAccountTransaction.builder()
                 .amount(request.amount())
                 .transactionType(TransactionType.CREDIT)
-                .bankAccount(BankAccount.builder().rib(request.ribTo()).build())
-                .customer(rest.findCustomer(request.receiverIdentity()))
+                .bankAccount(BankAccount.builder()
+                        .rib(request.ribTo())
+                        .customerIdentity(request.receiverIdentity())
+                        .build())
                 .build();
 
         String ribFrom = transactionFrom.getBankAccount().getRib();
         String ribTo = transactionTo.getBankAccount().getRib();
         Double amount = transactionFrom.getAmount();
         String motif = transactionFrom.getMotif();
-        String customerSender = transactionFrom.getCustomer().identity();
-        String customerReceiver = transactionTo.getCustomer().identity();
+        String customerSender = transactionFrom.getBankAccount().getCustomerIdentity();
+        String customerReceiver = transactionTo.getBankAccount().getCustomerIdentity();
 
-        Customer customer = rest.findCustomer(customerSender);
-        Customer customer2 = rest.findCustomer(customerReceiver);
-        BankAccount bankAccountFrom = bankAccountRepository.findByRib(ribFrom)
-                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas "+ribFrom));
-        BankAccount bankAccountTo = bankAccountRepository.findByRib(ribTo)
-                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas "+ribTo));
+        BankAccount bankAccountFrom = bankAccountRepository.findByRibAndCustomerIdentity(ribFrom,customerSender)
+                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+ribFrom));
+        BankAccount bankAccountTo = bankAccountRepository.findByRibAndCustomerIdentity(ribTo,customerReceiver)
+                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+ribTo));
 
         checkBusinessRules(bankAccountFrom,bankAccountTo,amount);
 
@@ -86,13 +100,11 @@ public class OperationServiceImpl implements OperationService{
         transactionFrom.setDescription("Virement en faveur du client identifié par "+customerReceiver);
         transactionFrom.setMotif(motif);
         transactionFrom.setBankAccount(bankAccountFrom);
-        transactionFrom.setCustomer(customer);
 
         transactionTo.setCreatedAt(LocalDateTime.now());
         transactionTo.setDescription("Virement reçu du client identifié par "+customerSender);
         transactionTo.setMotif(motif);
         transactionTo.setBankAccount(bankAccountTo);
-        transactionTo.setCustomer(customer2);
 
         transactionRepository.save(transactionFrom);
         transactionRepository.save(transactionTo);

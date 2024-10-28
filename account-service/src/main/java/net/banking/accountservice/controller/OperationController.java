@@ -4,12 +4,13 @@ import jakarta.validation.Valid;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
 import net.banking.accountservice.service.OperationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
+import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/operations")
 public class OperationController {
@@ -20,7 +21,18 @@ public class OperationController {
     }
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<OperationResponse> findAllOperations() { return service.getAllOperations(); }
+    public Page<OperationResponse> findAllOperations(
+            @RequestParam(required = false) Double amount,
+            @RequestParam(required = false) Double amount2,
+            @RequestParam(required = false) String transactionType,
+            @RequestParam(required = false) String rib,
+            @RequestParam(required = false) String customerIdentity,
+            @RequestParam(required = false) LocalDateTime startDate,
+            @RequestParam(required = false) LocalDateTime endDate,
+            @RequestParam(required = false) String createdAt,
+            Pageable pageable) {
+        return service.getAllOperations(amount, amount2, transactionType, rib, customerIdentity, startDate, endDate, createdAt, pageable);
+    }
 
     @PostMapping("/newPayment")
     public ResponseEntity<String> makeNewOperation(@RequestBody @Valid OperationRequest request) {
