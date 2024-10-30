@@ -5,6 +5,7 @@ import net.banking.accountservice.model.BankAccountTransaction;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class OperationSpecification {
 
@@ -16,9 +17,9 @@ public class OperationSpecification {
         return (root, query, criteriaBuilder) ->
                 amount == null ? criteriaBuilder.conjunction() : criteriaBuilder.equal(root.get("amount"),amount);
     }
-    public static Specification<BankAccountTransaction> amountBetween(Double amount,Double amount2){
+    public static Specification<BankAccountTransaction> amountBetween(Double minAmount,Double maxAmount){
         return (root, query, criteriaBuilder) ->
-                amount == null || amount2 == null ? criteriaBuilder.conjunction() : criteriaBuilder.between(root.get("amount"),amount,amount2);
+                minAmount == null || maxAmount == null ? criteriaBuilder.conjunction() : criteriaBuilder.between(root.get("amount"),minAmount,maxAmount);
     }
 
     public static Specification<BankAccountTransaction> transactionTypeEqual(String transactionType){
@@ -42,10 +43,12 @@ public class OperationSpecification {
         return (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (startDate != null){
-                predicate = criteriaBuilder.and(predicate,criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"),startDate));
+                LocalDateTime truncatedStartDate = startDate.truncatedTo(ChronoUnit.MINUTES);
+                predicate = criteriaBuilder.and(predicate,criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"),truncatedStartDate));
             }
             if (endDate != null){
-                predicate = criteriaBuilder.and(predicate,criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"),endDate));
+                LocalDateTime truncatedEndDate = endDate.truncatedTo(ChronoUnit.MINUTES);
+                predicate = criteriaBuilder.and(predicate,criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"),truncatedEndDate));
             }
             return predicate;
         };

@@ -52,17 +52,17 @@ public class BankAccountController {
     @PostMapping("/newCurrentAccount")
     public ResponseEntity<String> saveNewCurrentAccount(@RequestBody @Valid CurrentAccountRequest request) {
         bankAccountService.createNewCurrentAccount(request);
-        return new ResponseEntity<>(String.format("Compte a été créé avec succès pour le client identifié par [%s]",request.identity()),HttpStatus.CREATED);
+        return new ResponseEntity<>(String.format("Compte a été créé avec succès pour le client identifié par %s",request.identity()),HttpStatus.CREATED);
     }
     @PostMapping("/newSavingAccount")
     public ResponseEntity<String> saveNewSavingAccount(@RequestBody @Valid SavingAccountRequest request) {
         bankAccountService.createNewSavingAccount(request);
-        return new ResponseEntity<>(String.format("Compte a été créé avec succès pour le client identifié par [%s]",request.identity()),HttpStatus.CREATED);
+        return new ResponseEntity<>(String.format("Compte a été créé avec succès pour le client identifié par %s",request.identity()),HttpStatus.CREATED);
     }
     @PostMapping("/{rib}/changeStatus")
     public ResponseEntity<String> changeAccountStatusTo(@PathVariable String rib, @RequestBody @Valid ChangeAccountStatus request) {
         bankAccountService.changeAccountStatus(rib, request);
-        return new ResponseEntity<>(String.format("Compte identifié par le rib [%s] a été modifié avec succès",rib),HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(String.format("Compte identifié par le rib %s a été modifié avec succès",rib),HttpStatus.ACCEPTED);
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<BankAccountResponse> removeBankAccount(@PathVariable Long id) {

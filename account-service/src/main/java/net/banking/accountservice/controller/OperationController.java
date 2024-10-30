@@ -1,6 +1,7 @@
 package net.banking.accountservice.controller;
 
 import jakarta.validation.Valid;
+import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
 import net.banking.accountservice.service.OperationService;
@@ -23,7 +24,8 @@ public class OperationController {
     @ResponseStatus(HttpStatus.OK)
     public Page<OperationResponse> findAllOperations(
             @RequestParam(required = false) Double amount,
-            @RequestParam(required = false) Double amount2,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount,
             @RequestParam(required = false) String transactionType,
             @RequestParam(required = false) String rib,
             @RequestParam(required = false) String customerIdentity,
@@ -31,9 +33,11 @@ public class OperationController {
             @RequestParam(required = false) LocalDateTime endDate,
             @RequestParam(required = false) String createdAt,
             Pageable pageable) {
-        return service.getAllOperations(amount, amount2, transactionType, rib, customerIdentity, startDate, endDate, createdAt, pageable);
+        return service.getAllOperations(amount, minAmount, maxAmount,transactionType, rib, customerIdentity, startDate, endDate, createdAt, pageable);
     }
-
+    @GetMapping("/{rib}/details")
+    @ResponseStatus(HttpStatus.OK)
+    public BankAccountDetails bankAccountDetails(@PathVariable String rib){ return service.bankAccountHistory(rib); }
     @PostMapping("/newPayment")
     public ResponseEntity<String> makeNewOperation(@RequestBody @Valid OperationRequest request) {
         service.transferOperation(request);

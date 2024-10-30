@@ -1,8 +1,10 @@
 package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
+import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
+import net.banking.accountservice.dto.operation.TransactionDTO;
 import net.banking.accountservice.enums.AccountStatus;
 import net.banking.accountservice.enums.TransactionType;
 import net.banking.accountservice.exceptions.BankAccountException;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Transactional
@@ -40,11 +43,11 @@ public class OperationServiceImpl implements OperationService{
     }
 
     @Override
-    public Page<OperationResponse> getAllOperations(Double amount, Double amount2, String transactionType, String rib, String customerIdentity,
+    public Page<OperationResponse> getAllOperations(Double amount, Double minAmount, Double maxAmount ,String transactionType, String rib, String customerIdentity,
                                                     LocalDateTime startDate, LocalDateTime endDate, String createdAt, Pageable pageable) {
         Specification<BankAccountTransaction> specification = Specification.where(OperationSpecification.filterWithoutConditions())
                 .and(OperationSpecification.amountEqual(amount))
-                .and(OperationSpecification.amountBetween(amount,amount2))
+                .and(OperationSpecification.amountBetween(minAmount,maxAmount))
                 .and(OperationSpecification.transactionTypeEqual(transactionType))
                 .and(OperationSpecification.ribEqual(rib))
                 .and(OperationSpecification.customerEqual(customerIdentity))
@@ -108,6 +111,20 @@ public class OperationServiceImpl implements OperationService{
 
         transactionRepository.save(transactionFrom);
         transactionRepository.save(transactionTo);
+    }
+    @Override
+    public BankAccountDetails bankAccountHistory(String rib) {
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
+                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
+        List<BankAccountTransaction> transactions = transactionRepository.findByBankAccount_Rib(rib);
+        List<TransactionDTO> transactionDto = transactions
+                .stream()
+                .map(mapper::operationToTransactionDto)
+                .toList();
+        return BankAccountDetails.builder()
+                .rib(bankAccount.getRib())
+                .transaction(transactionDto)
+                .build();
     }
     private void checkBusinessRules(BankAccount bankAccountFrom,BankAccount bankAccountTo,Double amount){
         if (bankAccountFrom.getAccountStatus().equals(AccountStatus.CLOSED))
