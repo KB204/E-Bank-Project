@@ -5,6 +5,7 @@ import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
 import net.banking.accountservice.dto.operation.TransactionDTO;
+import net.banking.accountservice.dto.operation.WithdrawRequest;
 import net.banking.accountservice.enums.AccountStatus;
 import net.banking.accountservice.enums.TransactionType;
 import net.banking.accountservice.exceptions.BankAccountException;
@@ -63,36 +64,28 @@ public class OperationServiceImpl implements OperationService{
     @Override
     public void transferOperation(OperationRequest request) {
 
+        BankAccount bankAccountFrom = bankAccountRepository.findByRibAndCustomerIdentity(request.ribFrom(), request.senderIdentity())
+                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+request.ribFrom()));
+        BankAccount bankAccountTo = bankAccountRepository.findByRibAndCustomerIdentity(request.ribTo(), request.receiverIdentity())
+                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+request.ribTo()));
+
         BankAccountTransaction transactionFrom = BankAccountTransaction.builder()
                 .amount(request.amount())
                 .transactionType(TransactionType.DEBIT)
-                .bankAccount(BankAccount.builder()
-                        .rib(request.ribFrom())
-                        .customerIdentity(request.senderIdentity())
-                        .build())
+                .bankAccount(bankAccountFrom)
                 .motif(request.motif())
                 .build();
 
         BankAccountTransaction transactionTo = BankAccountTransaction.builder()
                 .amount(request.amount())
                 .transactionType(TransactionType.CREDIT)
-                .bankAccount(BankAccount.builder()
-                        .rib(request.ribTo())
-                        .customerIdentity(request.receiverIdentity())
-                        .build())
+                .bankAccount(bankAccountTo)
                 .build();
 
-        String ribFrom = transactionFrom.getBankAccount().getRib();
-        String ribTo = transactionTo.getBankAccount().getRib();
         Double amount = transactionFrom.getAmount();
         String motif = transactionFrom.getMotif();
         String customerSender = transactionFrom.getBankAccount().getCustomerIdentity();
         String customerReceiver = transactionTo.getBankAccount().getCustomerIdentity();
-
-        BankAccount bankAccountFrom = bankAccountRepository.findByRibAndCustomerIdentity(ribFrom,customerSender)
-                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+ribFrom));
-        BankAccount bankAccountTo = bankAccountRepository.findByRibAndCustomerIdentity(ribTo,customerReceiver)
-                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+ribTo));
 
         checkBusinessRules(bankAccountFrom,bankAccountTo,amount);
 
@@ -112,11 +105,43 @@ public class OperationServiceImpl implements OperationService{
         transactionRepository.save(transactionFrom);
         transactionRepository.save(transactionTo);
     }
+
     @Override
-    public BankAccountDetails bankAccountHistory(String rib) {
+    public void withdrawalOperation(WithdrawRequest request) {
+
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(request.ribFrom())
+                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
+
+        BankAccountTransaction transaction = BankAccountTransaction.builder()
+                .amount(request.amount())
+                .transactionType(TransactionType.DEBIT)
+                .bankAccount(bankAccount)
+                .build();
+
+        Double amount = transaction.getAmount();
+        checkBusinessRules(bankAccount,amount);
+
+        bankAccount.setBalance(bankAccount.getBalance() - amount);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setDescription("Retrait du montant "+amount+bankAccount.getCurrency());
+        transaction.setBankAccount(bankAccount);
+
+        transactionRepository.save(transaction);
+    }
+
+    @Override
+    public BankAccountDetails bankAccountHistory(String rib,Double amount,String transactionType,LocalDateTime startDate,
+                                                 LocalDateTime endDate,Pageable pageable) {
         BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
                 .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
-        List<BankAccountTransaction> transactions = transactionRepository.findByBankAccount_Rib(rib);
+
+        Specification<BankAccountTransaction> specification = Specification.where(OperationSpecification.ribEqual(rib))
+                .and(OperationSpecification.amountEqual(amount))
+                .and(OperationSpecification.transactionTypeEqual(transactionType))
+                .and(OperationSpecification.transactionDateBetween(startDate, endDate));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").descending());
+
+        Page<BankAccountTransaction> transactions = transactionRepository.findAll(specification,pageable);
         List<TransactionDTO> transactionDto = transactions
                 .stream()
                 .map(mapper::operationToTransactionDto)
@@ -142,5 +167,13 @@ public class OperationServiceImpl implements OperationService{
         if (bankAccountFrom instanceof SavingAccount){
             throw new BankAccountException("Vous ne pouvez pas effectuer un virement a partir d'un compte epargne");
         }
+    }
+    private void checkBusinessRules(BankAccount bankAccount,Double amount){
+        if (bankAccount.getAccountStatus().equals(AccountStatus.CLOSED))
+            throw new BankAccountException(String.format("Le compte identifié par %s est clôturé",bankAccount.getRib()));
+        if (bankAccount.getAccountStatus().equals(AccountStatus.BLOCKED))
+            throw new BankAccountException(String.format("Le compte identifié par %s est bloqué",bankAccount.getRib()));
+        if (bankAccount.getBalance() < amount)
+            throw new BankAccountException("Le solde du compte est inférieur au montant souhaité à envoyer");
     }
 }

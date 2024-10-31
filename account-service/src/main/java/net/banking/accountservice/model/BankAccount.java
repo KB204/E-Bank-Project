@@ -17,7 +17,7 @@ import java.util.List;
 @SuperBuilder
 @Inheritance(strategy = InheritanceType.JOINED)
 @Entity
-public class BankAccount {
+public abstract class BankAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

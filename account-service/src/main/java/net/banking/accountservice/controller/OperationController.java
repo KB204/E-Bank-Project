@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
+import net.banking.accountservice.dto.operation.WithdrawRequest;
 import net.banking.accountservice.service.OperationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,10 +38,22 @@ public class OperationController {
     }
     @GetMapping("/{rib}/details")
     @ResponseStatus(HttpStatus.OK)
-    public BankAccountDetails bankAccountDetails(@PathVariable String rib){ return service.bankAccountHistory(rib); }
+    public BankAccountDetails bankAccountDetails(
+            @PathVariable String rib,
+            @RequestParam(required = false) Double amount,
+            @RequestParam(required = false) String transactionType,
+            @RequestParam(required = false) LocalDateTime startDate,
+            @RequestParam(required = false) LocalDateTime endDate,
+            Pageable pageable){
+        return service.bankAccountHistory(rib, amount, transactionType, startDate, endDate, pageable); }
     @PostMapping("/newPayment")
     public ResponseEntity<String> makeNewOperation(@RequestBody @Valid OperationRequest request) {
         service.transferOperation(request);
         return new ResponseEntity<>(String.format("Virement du montant %s en faveur de %s par %s a été effectué avec succès",request.amount(),request.ribTo(),request.ribFrom()),HttpStatus.CREATED);
+    }
+    @PostMapping("/newWithdrawal")
+    public ResponseEntity<String> makeNewWithdrawal(@RequestBody @Valid WithdrawRequest request) {
+        service.withdrawalOperation(request);
+        return new ResponseEntity<>(String.format("Retrait du montant %s a été effectué avec succès",request.amount()),HttpStatus.CREATED);
     }
 }
