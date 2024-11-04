@@ -14,4 +14,5 @@ public record BankAccountResponse(
         LocalDateTime createdAt,
         AccountStatus accountStatus,
         Customer customer,
-        String customerIdentity) {}
+        String customerIdentity,
+        String customerEmail) {}

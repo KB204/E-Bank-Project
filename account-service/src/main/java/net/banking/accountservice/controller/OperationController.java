@@ -47,9 +47,9 @@ public class OperationController {
             Pageable pageable){
         return service.bankAccountHistory(rib, amount, transactionType, startDate, endDate, pageable); }
     @PostMapping("/newPayment")
-    public ResponseEntity<String> makeNewOperation(@RequestBody @Valid OperationRequest request) {
-        service.transferOperation(request);
-        return new ResponseEntity<>(String.format("Virement du montant %s en faveur de %s par %s a été effectué avec succès",request.amount(),request.ribTo(),request.ribFrom()),HttpStatus.CREATED);
+    public ResponseEntity<String> makeNewOperation(@RequestParam String rib,@RequestBody @Valid OperationRequest request) {
+        service.transferOperation(rib, request);
+        return new ResponseEntity<>(String.format("Virement du montant %s en faveur de %s par %s a été effectué avec succès",request.amount(),request.ribTo(),rib),HttpStatus.CREATED);
     }
     @PostMapping("/newWithdrawal")
     public ResponseEntity<String> makeNewWithdrawal(@RequestBody @Valid WithdrawRequest request) {

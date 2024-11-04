@@ -1,6 +1,7 @@
 package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
+import net.banking.accountservice.dto.EmailDetails;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
@@ -17,6 +18,8 @@ import net.banking.accountservice.model.SavingAccount;
 import net.banking.accountservice.repository.BankAccountRepository;
 import net.banking.accountservice.repository.TransactionRepository;
 import net.banking.accountservice.service.specification.OperationSpecification;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -35,12 +39,19 @@ public class OperationServiceImpl implements OperationService{
     private final BankAccountRepository bankAccountRepository;
     private final OperationMapper mapper;
     private final CustomerRest rest;
+    private final RabbitTemplate rabbitTemplate;
 
-    public OperationServiceImpl(TransactionRepository transactionRepository, BankAccountRepository bankAccountRepository, OperationMapper mapper, CustomerRest rest) {
+    @Value("${rabbitmq.exchange.email.name}")
+    private String emailExchange;
+    @Value("${rabbitmq.binding.email.name}")
+    private String emailRoutingKey;
+
+    public OperationServiceImpl(TransactionRepository transactionRepository, BankAccountRepository bankAccountRepository, OperationMapper mapper, CustomerRest rest, RabbitTemplate rabbitTemplate) {
         this.transactionRepository = transactionRepository;
         this.bankAccountRepository = bankAccountRepository;
         this.mapper = mapper;
         this.rest = rest;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Override
@@ -62,10 +73,10 @@ public class OperationServiceImpl implements OperationService{
                 });
     }
     @Override
-    public void transferOperation(OperationRequest request) {
+    public void transferOperation(String rib,OperationRequest request) {
 
-        BankAccount bankAccountFrom = bankAccountRepository.findByRibAndCustomerIdentity(request.ribFrom(), request.senderIdentity())
-                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+request.ribFrom()));
+        BankAccount bankAccountFrom = bankAccountRepository.findByRibAndCustomerIdentity(rib, request.senderIdentity())
+                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+rib));
         BankAccount bankAccountTo = bankAccountRepository.findByRibAndCustomerIdentity(request.ribTo(), request.receiverIdentity())
                 .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+request.ribTo()));
 
@@ -85,7 +96,9 @@ public class OperationServiceImpl implements OperationService{
         Double amount = transactionFrom.getAmount();
         String motif = transactionFrom.getMotif();
         String customerSender = transactionFrom.getBankAccount().getCustomerIdentity();
+        String customerSenderEmail = transactionFrom.getBankAccount().getCustomerEmail();
         String customerReceiver = transactionTo.getBankAccount().getCustomerIdentity();
+        String customerReceiverEmail = transactionTo.getBankAccount().getCustomerEmail();
 
         checkBusinessRules(bankAccountFrom,bankAccountTo,amount);
 
@@ -104,6 +117,20 @@ public class OperationServiceImpl implements OperationService{
 
         transactionRepository.save(transactionFrom);
         transactionRepository.save(transactionTo);
+        rabbitTemplate.convertAndSend(emailExchange,
+                emailRoutingKey,
+                EmailDetails.builder()
+                        .body(String.format("Vous avez reçu un virement de %s %s de la part du client identifié par %s",amount,bankAccountFrom.getCurrency(),bankAccountFrom.getCustomerIdentity()))
+                        .to(customerReceiverEmail)
+                        .subject("Virement Reçu Avec Succès")
+                        .build());
+        rabbitTemplate.convertAndSend(emailExchange,
+                emailRoutingKey,
+                EmailDetails.builder()
+                        .body(String.format("Vous venez de demander un virement de votre compte %s vers le compte %s intitulé %s d'un montant de %s %s",bankAccountFrom.getRib(),bankAccountTo.getRib(),bankAccountTo.getCustomerIdentity(),amount,bankAccountFrom.getCurrency()))
+                        .to(customerSenderEmail)
+                        .subject("Votre Ordre de Virement")
+                        .build());
     }
 
     @Override
@@ -166,6 +193,9 @@ public class OperationServiceImpl implements OperationService{
             throw new BankAccountException("Le compte source ne peut pas être le même que la destination");
         if (bankAccountFrom instanceof SavingAccount){
             throw new BankAccountException("Vous ne pouvez pas effectuer un virement a partir d'un compte epargne");
+        }
+        if (!Objects.equals(bankAccountFrom.getCurrency(), bankAccountTo.getCurrency())){
+            throw new BankAccountException("Problème de devise, vous n'avez pas le droit d'effectuer cette action veuillez contacter votre banque");
         }
     }
     private void checkBusinessRules(BankAccount bankAccount,Double amount){

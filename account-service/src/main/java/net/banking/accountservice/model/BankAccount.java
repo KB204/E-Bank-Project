@@ -31,6 +31,7 @@ public abstract class BankAccount {
     @Transient
     private Customer customer;
     private String customerIdentity;
+    private String customerEmail;
     @OneToMany(mappedBy = "bankAccount")
     private List<BankAccountTransaction> transactions;
 }

@@ -15,5 +15,6 @@ public record CurrentAccountResponse(
         AccountStatus accountStatus,
         Customer customer,
         String customerIdentity,
+        String customerEmail,
         Double overDraftLimit,
         Double overDraftFees) {}

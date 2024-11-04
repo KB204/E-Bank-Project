@@ -15,5 +15,6 @@ public record SavingAccountResponse(
         AccountStatus accountStatus,
         Customer customer,
         String customerIdentity,
+        String customerEmail,
         Double interest,
         Double withDrawLimit) {}
