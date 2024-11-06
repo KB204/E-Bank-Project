@@ -5,8 +5,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import net.banking.accountservice.config.FeignConfig;
 import net.banking.accountservice.dto.Customer;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "customer-service",url = "http://localhost:8081",configuration = FeignConfig.class)
 public interface CustomerRest {
@@ -16,6 +15,7 @@ public interface CustomerRest {
     Customer getCustomerByIdentity(@PathVariable String identity);
     @GetMapping("/api/customers/{identity}")
     Customer findCustomer(@PathVariable String identity);
+
     default Customer getDefaultCustomer(String identity,Exception e){
         return Customer.builder()
                 .firstname("Client non trouvé")

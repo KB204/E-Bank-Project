@@ -2,6 +2,7 @@ package net.banking.accountservice.controller;
 
 import jakarta.validation.Valid;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
+import net.banking.accountservice.dto.operation.CompleteOperationDTO;
 import net.banking.accountservice.dto.operation.OperationRequest;
 import net.banking.accountservice.dto.operation.OperationResponse;
 import net.banking.accountservice.dto.operation.WithdrawRequest;
@@ -49,6 +50,11 @@ public class OperationController {
     @PostMapping("/newPayment")
     public ResponseEntity<String> makeNewOperation(@RequestParam String rib,@RequestBody @Valid OperationRequest request) {
         service.transferOperation(rib, request);
+        return new ResponseEntity<>("Le code de vérification a été envoyé à votre adresse e-mail",HttpStatus.CREATED);
+    }
+    @PostMapping("/completeNewPayment")
+    public ResponseEntity<String> completeNewTransferOperation(@RequestParam String rib,@RequestBody @Valid CompleteOperationDTO request) {
+        service.completeTransferOperation(rib, request);
         return new ResponseEntity<>(String.format("Virement du montant %s en faveur de %s par %s a été effectué avec succès",request.amount(),request.ribTo(),rib),HttpStatus.CREATED);
     }
     @PostMapping("/newWithdrawal")

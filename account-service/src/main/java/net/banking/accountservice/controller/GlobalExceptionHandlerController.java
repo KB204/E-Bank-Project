@@ -3,6 +3,7 @@ package net.banking.accountservice.controller;
 import feign.FeignException;
 import net.banking.accountservice.dto.ErrorResponse;
 import net.banking.accountservice.exceptions.BankAccountException;
+import net.banking.accountservice.exceptions.InvalidOtpException;
 import net.banking.accountservice.exceptions.ResourceAlreadyExists;
 import net.banking.accountservice.exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ControllerAdvice
-public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandlerController extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers,
                                                                   HttpStatusCode status, WebRequest request) {
@@ -57,6 +58,13 @@ public class ExceptionHandlerController extends ResponseEntityExceptionHandler {
         List<String> details = new ArrayList<>();
         details.add(ex.getLocalizedMessage());
         ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(InvalidOtpException.class)
+    final ResponseEntity<Object> handleInvalidOtpException(InvalidOtpException ex) {
+        List<String> details = new ArrayList<>();
+        details.add(ex.getLocalizedMessage());
+        ErrorResponse error = new ErrorResponse("Erreurs techniques", details);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler(Exception.class)

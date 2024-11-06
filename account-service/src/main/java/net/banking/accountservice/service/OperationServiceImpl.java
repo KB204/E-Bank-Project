@@ -3,10 +3,7 @@ package net.banking.accountservice.service;
 import net.banking.accountservice.client.CustomerRest;
 import net.banking.accountservice.dto.EmailDetails;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
-import net.banking.accountservice.dto.operation.OperationRequest;
-import net.banking.accountservice.dto.operation.OperationResponse;
-import net.banking.accountservice.dto.operation.TransactionDTO;
-import net.banking.accountservice.dto.operation.WithdrawRequest;
+import net.banking.accountservice.dto.operation.*;
 import net.banking.accountservice.enums.AccountStatus;
 import net.banking.accountservice.enums.TransactionType;
 import net.banking.accountservice.exceptions.BankAccountException;
@@ -37,6 +34,7 @@ import java.util.Objects;
 public class OperationServiceImpl implements OperationService{
     private final TransactionRepository transactionRepository;
     private final BankAccountRepository bankAccountRepository;
+    private final CodeVerificationService codeVerificationService;
     private final OperationMapper mapper;
     private final CustomerRest rest;
     private final RabbitTemplate rabbitTemplate;
@@ -46,9 +44,10 @@ public class OperationServiceImpl implements OperationService{
     @Value("${rabbitmq.binding.email.name}")
     private String emailRoutingKey;
 
-    public OperationServiceImpl(TransactionRepository transactionRepository, BankAccountRepository bankAccountRepository, OperationMapper mapper, CustomerRest rest, RabbitTemplate rabbitTemplate) {
+    public OperationServiceImpl(TransactionRepository transactionRepository, BankAccountRepository bankAccountRepository, CodeVerificationService codeVerificationService, OperationMapper mapper, CustomerRest rest, RabbitTemplate rabbitTemplate) {
         this.transactionRepository = transactionRepository;
         this.bankAccountRepository = bankAccountRepository;
+        this.codeVerificationService = codeVerificationService;
         this.mapper = mapper;
         this.rest = rest;
         this.rabbitTemplate = rabbitTemplate;
@@ -73,66 +72,23 @@ public class OperationServiceImpl implements OperationService{
                 });
     }
     @Override
-    public void transferOperation(String rib,OperationRequest request) {
+    public void transferOperation(String rib, OperationRequest request) {
 
-        BankAccount bankAccountFrom = bankAccountRepository.findByRibAndCustomerIdentity(rib, request.senderIdentity())
-                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+rib));
-        BankAccount bankAccountTo = bankAccountRepository.findByRibAndCustomerIdentity(request.ribTo(), request.receiverIdentity())
-                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas "+request.ribTo()));
+        BankAccount bankAccountFrom = findBankAccount(rib,request.senderIdentity());
+        BankAccount bankAccountTo = findBankAccount(request.ribTo(), request.receiverIdentity());
 
-        BankAccountTransaction transactionFrom = BankAccountTransaction.builder()
-                .amount(request.amount())
-                .transactionType(TransactionType.DEBIT)
-                .bankAccount(bankAccountFrom)
-                .motif(request.motif())
-                .build();
-
-        BankAccountTransaction transactionTo = BankAccountTransaction.builder()
-                .amount(request.amount())
-                .transactionType(TransactionType.CREDIT)
-                .bankAccount(bankAccountTo)
-                .build();
-
-        Double amount = transactionFrom.getAmount();
-        String motif = transactionFrom.getMotif();
-        String customerSender = transactionFrom.getBankAccount().getCustomerIdentity();
-        String customerSenderEmail = transactionFrom.getBankAccount().getCustomerEmail();
-        String customerReceiver = transactionTo.getBankAccount().getCustomerIdentity();
-        String customerReceiverEmail = transactionTo.getBankAccount().getCustomerEmail();
-
-        checkBusinessRules(bankAccountFrom,bankAccountTo,amount);
-
-        bankAccountFrom.setBalance(bankAccountFrom.getBalance() - amount);
-        bankAccountTo.setBalance(bankAccountTo.getBalance() + amount);
-
-        transactionFrom.setCreatedAt(LocalDateTime.now());
-        transactionFrom.setDescription("Virement en faveur du client identifié par "+customerReceiver);
-        transactionFrom.setMotif(motif);
-        transactionFrom.setBankAccount(bankAccountFrom);
-
-        transactionTo.setCreatedAt(LocalDateTime.now());
-        transactionTo.setDescription("Virement reçu du client identifié par "+customerSender);
-        transactionTo.setMotif(motif);
-        transactionTo.setBankAccount(bankAccountTo);
-
-        transactionRepository.save(transactionFrom);
-        transactionRepository.save(transactionTo);
-        rabbitTemplate.convertAndSend(emailExchange,
-                emailRoutingKey,
-                EmailDetails.builder()
-                        .body(String.format("Vous avez reçu un virement de %s %s de la part du client identifié par %s",amount,bankAccountFrom.getCurrency(),bankAccountFrom.getCustomerIdentity()))
-                        .to(customerReceiverEmail)
-                        .subject("Virement Reçu Avec Succès")
-                        .build());
-        rabbitTemplate.convertAndSend(emailExchange,
-                emailRoutingKey,
-                EmailDetails.builder()
-                        .body(String.format("Vous venez de demander un virement de votre compte %s vers le compte %s intitulé %s d'un montant de %s %s",bankAccountFrom.getRib(),bankAccountTo.getRib(),bankAccountTo.getCustomerIdentity(),amount,bankAccountFrom.getCurrency()))
-                        .to(customerSenderEmail)
-                        .subject("Votre Ordre de Virement")
-                        .build());
+        checkBusinessRules(bankAccountFrom,bankAccountTo, request.amount());
+        codeVerificationService.sendOtpCode(rib);
     }
+    @Override
+    public void completeTransferOperation(String rib, CompleteOperationDTO request) {
 
+        BankAccount bankAccountFrom = findBankAccount(rib,request.senderIdentity());
+        BankAccount bankAccountTo = findBankAccount(request.ribTo(), request.receiverIdentity());
+
+        codeVerificationService.verifyOtpCode(rib, request.otp());
+        performTransfer(bankAccountFrom, bankAccountTo, request);
+    }
     @Override
     public void withdrawalOperation(WithdrawRequest request) {
 
@@ -177,6 +133,49 @@ public class OperationServiceImpl implements OperationService{
                 .rib(bankAccount.getRib())
                 .transaction(transactionDto)
                 .build();
+    }
+    private BankAccount findBankAccount(String rib, String identity) {
+        return bankAccountRepository.findByRibAndCustomerIdentity(rib, identity)
+                .orElseThrow(() -> new ResourceNotFoundException("Compte ou identifiant du client n'existe pas " + rib));
+    }
+    private void performTransfer(BankAccount from, BankAccount to, CompleteOperationDTO request) {
+        Double amount = request.amount();
+        String motif = request.motif();
+
+        from.setBalance(from.getBalance() - amount);
+        to.setBalance(to.getBalance() + amount);
+
+        transactionRepository.save(createTransaction(from, amount, TransactionType.DEBIT, "Virement en faveur du client identifié par " + to.getCustomerIdentity(), motif));
+        transactionRepository.save(createTransaction(to, amount, TransactionType.CREDIT, "Virement reçu du client identifié par " + from.getCustomerIdentity(), motif));
+
+        sendNotificationEmail(from, to, amount);
+    }
+    private BankAccountTransaction createTransaction(BankAccount account, Double amount, TransactionType type, String description, String motif) {
+        return BankAccountTransaction.builder()
+                .amount(amount)
+                .transactionType(type)
+                .bankAccount(account)
+                .description(description)
+                .motif(motif)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+    private void sendNotificationEmail(BankAccount from, BankAccount to, Double amount) {
+        rabbitTemplate.convertAndSend(emailExchange, emailRoutingKey,
+                EmailDetails.builder()
+                        .body(String.format("Vous avez reçu un virement de %s %s de la part du client identifié par %s",
+                                amount, from.getCurrency(), from.getCustomerIdentity()))
+                        .to(to.getCustomerEmail())
+                        .subject("Virement Reçu Avec Succès")
+                        .build());
+
+        rabbitTemplate.convertAndSend(emailExchange, emailRoutingKey,
+                EmailDetails.builder()
+                        .body(String.format("Vous venez de demander un virement de votre compte %s vers le compte %s intitulé %s d'un montant de %s %s",
+                                from.getRib(), to.getRib(), to.getCustomerIdentity(), amount, from.getCurrency()))
+                        .to(from.getCustomerEmail())
+                        .subject("Votre Ordre de Virement")
+                        .build());
     }
     private void checkBusinessRules(BankAccount bankAccountFrom,BankAccount bankAccountTo,Double amount){
         if (bankAccountFrom.getAccountStatus().equals(AccountStatus.CLOSED))
