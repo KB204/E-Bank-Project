@@ -7,7 +7,7 @@ import net.banking.accountservice.dto.Customer;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "customer-service",url = "http://localhost:8081",configuration = FeignConfig.class)
+@FeignClient(name = "CUSTOMER-SERVICE",configuration = FeignConfig.class)
 public interface CustomerRest {
     @CircuitBreaker(name = "customerService",fallbackMethod = "getDefaultCustomer")
     @Retry(name = "retryCustomerService")
