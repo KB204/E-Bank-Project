@@ -90,26 +90,20 @@ public class OperationServiceImpl implements OperationService{
         performTransfer(bankAccountFrom, bankAccountTo, request);
     }
     @Override
-    public void withdrawalOperation(WithdrawRequest request) {
-
-        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(request.ribFrom())
+    public void withdrawalOperation(String rib, WithdrawRequest request) {
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
                 .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
 
-        BankAccountTransaction transaction = BankAccountTransaction.builder()
-                .amount(request.amount())
-                .transactionType(TransactionType.DEBIT)
-                .bankAccount(bankAccount)
-                .build();
+        checkBusinessRules(bankAccount,request.amount());
+        codeVerificationService.sendOtpCode(rib);
+    }
+    @Override
+    public void completeWithdrawalOperation(String rib, CompleteWithdrawDTO request) {
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
+                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
 
-        Double amount = transaction.getAmount();
-        checkBusinessRules(bankAccount,amount);
-
-        bankAccount.setBalance(bankAccount.getBalance() - amount);
-        transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setDescription("Retrait du montant "+amount+bankAccount.getCurrency());
-        transaction.setBankAccount(bankAccount);
-
-        transactionRepository.save(transaction);
+        codeVerificationService.verifyOtpCode(rib, request.otp());
+        performWithdrawal(bankAccount,request);
     }
 
     @Override
@@ -150,6 +144,12 @@ public class OperationServiceImpl implements OperationService{
 
         sendNotificationEmail(from, to, amount);
     }
+    private void performWithdrawal(BankAccount bankAccount, CompleteWithdrawDTO request){
+        Double amount = request.amount();
+        bankAccount.setBalance(bankAccount.getBalance() - amount);
+
+        transactionRepository.save(createTransaction(bankAccount,amount, "Retrait du montant "+amount+bankAccount.getCurrency()));
+    }
     private BankAccountTransaction createTransaction(BankAccount account, Double amount, TransactionType type, String description, String motif) {
         return BankAccountTransaction.builder()
                 .amount(amount)
@@ -157,6 +157,15 @@ public class OperationServiceImpl implements OperationService{
                 .bankAccount(account)
                 .description(description)
                 .motif(motif)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+    private BankAccountTransaction createTransaction(BankAccount account, Double amount, String description) {
+        return BankAccountTransaction.builder()
+                .amount(amount)
+                .transactionType(TransactionType.DEBIT)
+                .bankAccount(account)
+                .description(description)
                 .createdAt(LocalDateTime.now())
                 .build();
     }

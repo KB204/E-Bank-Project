@@ -2,10 +2,7 @@ package net.banking.accountservice.controller;
 
 import jakarta.validation.Valid;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
-import net.banking.accountservice.dto.operation.CompleteOperationDTO;
-import net.banking.accountservice.dto.operation.OperationRequest;
-import net.banking.accountservice.dto.operation.OperationResponse;
-import net.banking.accountservice.dto.operation.WithdrawRequest;
+import net.banking.accountservice.dto.operation.*;
 import net.banking.accountservice.service.OperationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -58,8 +55,13 @@ public class OperationController {
         return new ResponseEntity<>(String.format("Virement du montant %s en faveur de %s par %s a été effectué avec succès",request.amount(),request.ribTo(),rib),HttpStatus.CREATED);
     }
     @PostMapping("/newWithdrawal")
-    public ResponseEntity<String> makeNewWithdrawal(@RequestBody @Valid WithdrawRequest request) {
-        service.withdrawalOperation(request);
+    public ResponseEntity<String> makeNewWithdrawal(@RequestParam String rib,@RequestBody @Valid WithdrawRequest request) {
+        service.withdrawalOperation(rib, request);
+        return new ResponseEntity<>("Le code de vérification a été envoyé à votre adresse e-mail",HttpStatus.CREATED);
+    }
+    @PostMapping("/completeNewWithdraw")
+    public ResponseEntity<String> completeNewWithdrawalOperation(@RequestParam String rib, @RequestBody @Valid CompleteWithdrawDTO request) {
+        service.completeWithdrawalOperation(rib, request);
         return new ResponseEntity<>(String.format("Retrait du montant %s a été effectué avec succès",request.amount()),HttpStatus.CREATED);
     }
 }

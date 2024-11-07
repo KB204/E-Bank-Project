@@ -2,8 +2,12 @@ package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
 import net.banking.accountservice.dto.Customer;
+import net.banking.accountservice.dto.bankaccount.ChangeAccountStatus;
 import net.banking.accountservice.dto.currentaccount.CurrentAccountRequest;
+import net.banking.accountservice.enums.AccountStatus;
 import net.banking.accountservice.exceptions.ResourceAlreadyExists;
+import net.banking.accountservice.exceptions.ResourceNotFoundException;
+import net.banking.accountservice.model.BankAccount;
 import net.banking.accountservice.model.CurrentAccount;
 import net.banking.accountservice.repository.BankAccountRepository;
 import org.junit.jupiter.api.Disabled;
@@ -70,8 +74,32 @@ class BankAccountServiceImplTest {
     }
 
     @Test
-    @Disabled
-    void changeAccountStatus() {
+    void shouldChangeAccountStatus() {
+        // Given
+        CurrentAccount account = CurrentAccount.builder()
+                .rib("test")
+                .accountStatus(AccountStatus.OPENED)
+                .build();
+        ChangeAccountStatus request = new ChangeAccountStatus(AccountStatus.CLOSED);
+        // When
+        Mockito.when(repository.findByRibIgnoreCase(account.getRib())).thenReturn(Optional.of(account));
+
+        underTest.changeAccountStatus(account.getRib(),request);
+        // then
+        assertThat(account.getAccountStatus()).isEqualTo(AccountStatus.CLOSED);
+        Mockito.verify(repository).save(account);
+    }
+    @Test
+    void shouldNotChangeAccountStatus() {
+        // given
+        ChangeAccountStatus request = new ChangeAccountStatus(AccountStatus.CLOSED);
+        // when
+        Mockito.when(repository.findByRibIgnoreCase("xxx")).thenReturn(Optional.empty());
+        // then
+        assertThatThrownBy(() -> underTest.changeAccountStatus("xxx",request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Compte n'existe pas");
+        Mockito.verify(repository,Mockito.never()).save(Mockito.any(BankAccount.class));
     }
 
     @Test
