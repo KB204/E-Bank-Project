@@ -199,12 +199,12 @@ public class OperationServiceImpl implements OperationService{
             throw new BankAccountException("Le solde du compte est inférieur au montant souhaité à envoyer");
         if (bankAccountFrom.getRib().equals(bankAccountTo.getRib()))
             throw new BankAccountException("Le compte source ne peut pas être le même que la destination");
-        if (bankAccountFrom instanceof SavingAccount){
+        if (bankAccountFrom instanceof SavingAccount)
             throw new BankAccountException("Vous ne pouvez pas effectuer un virement a partir d'un compte epargne");
-        }
-        if (!Objects.equals(bankAccountFrom.getCurrency(), bankAccountTo.getCurrency())){
+        if (amount > 6000.0)
+            throw new BankAccountException("Vous avez dépassé le plafond autorisé");
+        if (!Objects.equals(bankAccountFrom.getCurrency(), bankAccountTo.getCurrency()))
             throw new BankAccountException("Problème de devise, vous n'avez pas le droit d'effectuer cette action veuillez contacter votre banque");
-        }
     }
     private void checkBusinessRules(BankAccount bankAccount,Double amount){
         if (bankAccount.getAccountStatus().equals(AccountStatus.CLOSED))
@@ -213,5 +213,7 @@ public class OperationServiceImpl implements OperationService{
             throw new BankAccountException(String.format("Le compte identifié par %s est bloqué",bankAccount.getRib()));
         if (bankAccount.getBalance() < amount)
             throw new BankAccountException("Le solde du compte est inférieur au montant souhaité à envoyer");
+        if (amount > 6000.0)
+            throw new BankAccountException("Vous avez dépassé le plafond autorisé");
     }
 }
