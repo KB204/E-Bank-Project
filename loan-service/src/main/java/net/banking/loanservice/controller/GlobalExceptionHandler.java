@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,8 +45,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
-    @ExceptionHandler(FeignException.class)
-    final ResponseEntity<Object> handleFeignException(FeignException ex) {
+    @ExceptionHandler(UndeclaredThrowableException.class)
+    final ResponseEntity<Object> handleFeignException(UndeclaredThrowableException ex) {
         List<String> details = new ArrayList<>();
         details.add("Impossible de se connecter au service client. Veuillez réessayer plus tard");
         ErrorResponse error = new ErrorResponse("Erreurs techniques", details);

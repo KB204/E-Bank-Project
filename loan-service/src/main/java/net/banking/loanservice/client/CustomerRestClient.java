@@ -9,18 +9,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "CUSTOMER-SERVICE",configuration = FeignConfig.class)
-public interface CustomerRest {
+public interface CustomerRestClient {
     @CircuitBreaker(name = "customerService",fallbackMethod = "getDefaultCustomer")
     @Retry(name = "retryCustomerService")
     @GetMapping("/api/customers/{identity}")
-    Customer getCustomerByIdentity(@PathVariable String identity);
+    Customer fetchCustomerByIdentity(@PathVariable String identity);
     @GetMapping("/api/customers/{identity}")
-    Customer findCustomer(@PathVariable String identity);
+    Customer findCustomerByIdentity(@PathVariable String identity);
 
     default Customer getDefaultCustomer(String identity,Exception e){
         return Customer.builder()
                 .firstname("Client non trouvé")
                 .lastname("Client non trouvé")
+                .email("Client non trouvé")
                 .identity(identity)
                 .build();
     }

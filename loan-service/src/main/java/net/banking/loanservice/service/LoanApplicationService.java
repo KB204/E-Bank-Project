@@ -7,5 +7,9 @@ import java.util.List;
 
 public interface LoanApplicationService {
     void createNewLoanApplication(LoanApplicationRequest request);
+    void approveLoanApplication(String identifier);
+    void declineLoanApplication(String identifier);
+    LoanApplicationResponse findLoanApplication(String identifier);
+    void removeLoanApplication(Long id);
     List<LoanApplicationResponse> getAllLoansApplications();
 }

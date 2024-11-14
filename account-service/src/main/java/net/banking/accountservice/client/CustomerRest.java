@@ -20,6 +20,7 @@ public interface CustomerRest {
         return Customer.builder()
                 .firstname("Client non trouvé")
                 .lastname("Client non trouvé")
+                .email("Client non trouvé")
                 .identity(identity)
                 .build();
     }

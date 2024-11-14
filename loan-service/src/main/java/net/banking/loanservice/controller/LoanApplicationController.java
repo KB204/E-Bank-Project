@@ -23,10 +23,30 @@ public class LoanApplicationController {
     public List<LoanApplicationResponse> findAllLoansApplications() {
         return service.getAllLoansApplications();
     }
-
+    @GetMapping("/searchFor/{identity}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<LoanApplicationResponse> findLoanApplication(@PathVariable String identity){
+        LoanApplicationResponse response = service.findLoanApplication(identity);
+        return ResponseEntity.ok(response);
+    }
     @PostMapping
     public ResponseEntity<String> saveNewLoanApplication(@RequestBody @Valid LoanApplicationRequest request) {
         service.createNewLoanApplication(request);
         return new ResponseEntity<>("Votre demande de crédit a été transmise avec succès. Vous serez informé par email pour obtenir les détails de votre demande",HttpStatus.CREATED);
+    }
+    @PostMapping("/approveLoanApplication/{identity}")
+    public ResponseEntity<String> approveLoanApplication(@PathVariable String identity){
+        service.approveLoanApplication(identity);
+        return new ResponseEntity<>("Demande de crédit a été accepté avec succès",HttpStatus.ACCEPTED);
+    }
+    @PostMapping("/declineLoanApplication/{identity}")
+    public ResponseEntity<String> rejectLoanApplication(@PathVariable String identity){
+        service.declineLoanApplication(identity);
+        return new ResponseEntity<>("Demande de crédit a été rejetée",HttpStatus.ACCEPTED);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<LoanApplicationResponse> removeLoanApplicationFromDb(@PathVariable Long id){
+        service.removeLoanApplication(id);
+        return ResponseEntity.noContent().build();
     }
 }
