@@ -1,11 +1,9 @@
-package net.banking.accountservice.controller;
+package net.banking.loanservice.controller;
 
 import feign.FeignException;
-import net.banking.accountservice.dto.ErrorResponse;
-import net.banking.accountservice.exceptions.BankAccountException;
-import net.banking.accountservice.exceptions.InvalidOtpException;
-import net.banking.accountservice.exceptions.ResourceAlreadyExists;
-import net.banking.accountservice.exceptions.ResourceNotFoundException;
+import net.banking.loanservice.dto.ErrorResponse;
+import net.banking.loanservice.exceptions.ResourceAlreadyExists;
+import net.banking.loanservice.exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -21,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ControllerAdvice
-public class GlobalExceptionHandlerController extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers,
                                                                   HttpStatusCode status, WebRequest request) {
@@ -52,20 +50,6 @@ public class GlobalExceptionHandlerController extends ResponseEntityExceptionHan
         details.add("Impossible de se connecter au service client. Veuillez réessayer plus tard");
         ErrorResponse error = new ErrorResponse("Erreurs techniques", details);
         return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
-    }
-    @ExceptionHandler(BankAccountException.class)
-    final ResponseEntity<Object> handleBankAccountException(BankAccountException ex) {
-        List<String> details = new ArrayList<>();
-        details.add(ex.getLocalizedMessage());
-        ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-    @ExceptionHandler(InvalidOtpException.class)
-    final ResponseEntity<Object> handleInvalidOtpException(InvalidOtpException ex) {
-        List<String> details = new ArrayList<>();
-        details.add(ex.getLocalizedMessage());
-        ErrorResponse error = new ErrorResponse("Erreurs techniques", details);
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler(Exception.class)
     final ResponseEntity<Object> handleOtherExceptions(Exception ex) {

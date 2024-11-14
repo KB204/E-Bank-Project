@@ -1,12 +1,12 @@
 package net.banking.loanservice.controller;
 
+import jakarta.validation.Valid;
+import net.banking.loanservice.dto.loan_application.LoanApplicationRequest;
 import net.banking.loanservice.dto.loan_application.LoanApplicationResponse;
 import net.banking.loanservice.service.LoanApplicationService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,5 +22,11 @@ public class LoanApplicationController {
     @ResponseStatus(HttpStatus.OK)
     public List<LoanApplicationResponse> findAllLoansApplications() {
         return service.getAllLoansApplications();
+    }
+
+    @PostMapping
+    public ResponseEntity<String> saveNewLoanApplication(@RequestBody @Valid LoanApplicationRequest request) {
+        service.createNewLoanApplication(request);
+        return new ResponseEntity<>("Votre demande de crédit a été transmise avec succès. Vous serez informé par email pour obtenir les détails de votre demande",HttpStatus.CREATED);
     }
 }

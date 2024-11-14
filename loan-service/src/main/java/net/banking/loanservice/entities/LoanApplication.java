@@ -2,11 +2,11 @@ package net.banking.loanservice.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.banking.loanservice.dto.Customer;
 import net.banking.loanservice.enums.ApplicationStatus;
-import net.banking.loanservice.enums.LoanTerm;
 import net.banking.loanservice.enums.LoanType;
 
 import java.time.LocalDate;
@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 @Entity
 public class LoanApplication {
     @Id
@@ -22,8 +23,7 @@ public class LoanApplication {
     private String identifier;
     @Enumerated(EnumType.STRING)
     private LoanType loanType;
-    @Enumerated(EnumType.STRING)
-    private LoanTerm loanTerm;
+    private Integer loanTerm;
     private Double requestedAmount;
     private Double interest;
     @Enumerated(EnumType.STRING)
