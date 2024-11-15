@@ -10,11 +10,16 @@ import net.banking.loanservice.enums.ApplicationStatus;
 import net.banking.loanservice.exceptions.ResourceAlreadyExists;
 import net.banking.loanservice.exceptions.ResourceNotFoundException;
 import net.banking.loanservice.mapper.LoanApplicationMapper;
+import net.banking.loanservice.service.specification.LoanApplicationSpec;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,14 +37,22 @@ public class LoanApplicationImpl implements LoanApplicationService{
         this.rest = rest;
     }
     @Override
-    public List<LoanApplicationResponse> getAllLoansApplications() {
-        return repository.findAll()
-                .stream()
+    public Page<LoanApplicationResponse> getAllLoansApplications(String identifier, String loanType, Integer loanTerm, Double amount,
+                                                                 Double minAmount, Double maxAmount, String status, String customerIdentity, Pageable pageable) {
+        Specification<LoanApplication> specification = LoanApplicationSpec.filterWithoutAnyConditions()
+                .and(LoanApplicationSpec.identifierEqual(identifier))
+                .and(LoanApplicationSpec.loanTypeLike(loanType))
+                .and(LoanApplicationSpec.loanTermEqual(loanTerm))
+                .and(LoanApplicationSpec.amountEqual(amount))
+                .and(LoanApplicationSpec.amountBetween(minAmount,maxAmount))
+                .and(LoanApplicationSpec.statusLike(status))
+                .and(LoanApplicationSpec.customerEqual(customerIdentity));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").descending());
+        return repository.findAll(specification,pageable)
                 .map(loanApplication -> {
                     loanApplication.setCustomer(rest.fetchCustomerByIdentity(loanApplication.getCustomerIdentity()));
                     return mapper.loanApplicationToDtoResponse(loanApplication);
-                })
-                .toList();
+                });
     }
     @Override
     public void createNewLoanApplication(LoanApplicationRequest request) {
