@@ -1,7 +1,6 @@
 package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
-import net.banking.accountservice.dto.EmailDetails;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.*;
 import net.banking.accountservice.enums.AccountStatus;
@@ -15,8 +14,6 @@ import net.banking.accountservice.model.SavingAccount;
 import net.banking.accountservice.repository.BankAccountRepository;
 import net.banking.accountservice.repository.TransactionRepository;
 import net.banking.accountservice.service.specification.OperationSpecification;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,20 +34,13 @@ public class OperationServiceImpl implements OperationService{
     private final CodeVerificationService codeVerificationService;
     private final OperationMapper mapper;
     private final CustomerRest rest;
-    private final RabbitTemplate rabbitTemplate;
 
-    @Value("${rabbitmq.exchange.email.name}")
-    private String emailExchange;
-    @Value("${rabbitmq.binding.email.name}")
-    private String emailRoutingKey;
-
-    public OperationServiceImpl(TransactionRepository transactionRepository, BankAccountRepository bankAccountRepository, CodeVerificationService codeVerificationService, OperationMapper mapper, CustomerRest rest, RabbitTemplate rabbitTemplate) {
+    public OperationServiceImpl(TransactionRepository transactionRepository, BankAccountRepository bankAccountRepository, CodeVerificationService codeVerificationService, OperationMapper mapper, CustomerRest rest) {
         this.transactionRepository = transactionRepository;
         this.bankAccountRepository = bankAccountRepository;
         this.codeVerificationService = codeVerificationService;
         this.mapper = mapper;
         this.rest = rest;
-        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Override
@@ -142,7 +132,7 @@ public class OperationServiceImpl implements OperationService{
         transactionRepository.save(createTransaction(from, amount, TransactionType.DEBIT, "Virement en faveur du client identifié par " + to.getCustomerIdentity(), motif));
         transactionRepository.save(createTransaction(to, amount, TransactionType.CREDIT, "Virement reçu du client identifié par " + from.getCustomerIdentity(), motif));
 
-        sendNotificationEmail(from, to, amount);
+        codeVerificationService.sendNotificationEmail(from, to, amount);
     }
     private void performWithdrawal(BankAccount bankAccount, CompleteWithdrawDTO request){
         Double amount = request.amount();
@@ -168,23 +158,6 @@ public class OperationServiceImpl implements OperationService{
                 .description(description)
                 .createdAt(LocalDateTime.now())
                 .build();
-    }
-    private void sendNotificationEmail(BankAccount from, BankAccount to, Double amount) {
-        rabbitTemplate.convertAndSend(emailExchange, emailRoutingKey,
-                EmailDetails.builder()
-                        .body(String.format("Vous avez reçu un virement de %s %s de la part du client identifié par %s",
-                                amount, from.getCurrency(), from.getCustomerIdentity()))
-                        .to(to.getCustomerEmail())
-                        .subject("Virement Reçu Avec Succès")
-                        .build());
-
-        rabbitTemplate.convertAndSend(emailExchange, emailRoutingKey,
-                EmailDetails.builder()
-                        .body(String.format("Vous venez de demander un virement de votre compte %s vers le compte %s intitulé %s d'un montant de %s %s",
-                                from.getRib(), to.getRib(), to.getCustomerIdentity(), amount, from.getCurrency()))
-                        .to(from.getCustomerEmail())
-                        .subject("Votre Ordre de Virement")
-                        .build());
     }
     private void checkBusinessRules(BankAccount bankAccountFrom,BankAccount bankAccountTo,Double amount){
         if (bankAccountFrom.getAccountStatus().equals(AccountStatus.CLOSED))

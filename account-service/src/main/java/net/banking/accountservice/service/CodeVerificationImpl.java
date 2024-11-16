@@ -65,6 +65,26 @@ public class CodeVerificationImpl implements CodeVerificationService {
             throw new InvalidOtpException("Code de vérification est expiré");
         }
     }
+
+    @Override
+    public void sendNotificationEmail(BankAccount from, BankAccount to, Double amount) {
+        rabbitTemplate.convertAndSend(emailExchange, emailRoutingKey,
+                EmailDetails.builder()
+                        .body(String.format("Vous avez reçu un virement de %s %s de la part du client identifié par %s",
+                                amount, from.getCurrency(), from.getCustomerIdentity()))
+                        .to(to.getCustomerEmail())
+                        .subject("Virement Reçu Avec Succès")
+                        .build());
+
+        rabbitTemplate.convertAndSend(emailExchange, emailRoutingKey,
+                EmailDetails.builder()
+                        .body(String.format("Vous venez de demander un virement de votre compte %s vers le compte %s intitulé %s d'un montant de %s %s",
+                                from.getRib(), to.getRib(), to.getCustomerIdentity(), amount, from.getCurrency()))
+                        .to(from.getCustomerEmail())
+                        .subject("Votre Ordre de Virement")
+                        .build());
+    }
+
     private Integer otpGenerator(){
         Random random = new Random();
         return random.nextInt(100_000,999_999);

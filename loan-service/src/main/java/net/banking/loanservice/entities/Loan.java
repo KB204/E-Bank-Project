@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import net.banking.loanservice.dto.Customer;
 import net.banking.loanservice.enums.LoanStatus;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 @Data
 @Inheritance(strategy = InheritanceType.JOINED)
 @Entity
