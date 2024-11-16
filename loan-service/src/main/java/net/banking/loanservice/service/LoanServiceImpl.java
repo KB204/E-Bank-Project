@@ -81,6 +81,7 @@ public class LoanServiceImpl implements LoanService{
     public void createUnsecuredLoan(UnsecuredLoanRequest request) {
         LoanApplication loanApplication = loanApplicationRepository.findByIdentifierIgnoreCase(request.identifier())
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("La demande identifiée par %s n'existe pas",request.identifier())));
+
         checkBusinessRules(loanApplication);
 
         UnsecuredLoan loan = UnsecuredLoan.builder()
@@ -88,23 +89,38 @@ public class LoanServiceImpl implements LoanService{
                 .principleAmount(loanApplication.getRequestedAmount())
                 .interest(loanApplication.getInterest())
                 .startedDate(LocalDate.now())
+                .loanApplication(loanApplication)
                 .build();
+
         Double amount = calculateRemainingAmount(loan);
+        Double treat = calculateMonthlyInstallment(loan);
+        LocalDate endDate = calculateLoanEndingDate(loan);
+
         loan.setRemainingBalance(amount);
+        loan.setMonthlyInstallment(treat);
+        loan.setEndDate(endDate);
 
         loanRepository.save(loan);
     }
-
+    private LocalDate calculateLoanEndingDate(Loan loan){
+        return loan.getStartedDate().plusMonths(loan.getLoanApplication().getLoanTerm());
+    }
+    private Double calculateMonthlyInstallment(Loan loan){
+        double monthlyInterest = (loan.getInterest() / 100) / 12;
+        int loanTerm = loan.getLoanApplication().getLoanTerm();
+        return (loan.getPrincipleAmount() * monthlyInterest * Math.pow(1 + monthlyInterest,loanTerm)) /
+                (Math.pow(1 + monthlyInterest,loanTerm) - 1);
+    }
     private Double calculateRemainingAmount(Loan loan){
-
+        if (loan.getPayments() == null){
+            return loan.getPrincipleAmount();
+        }
         double amount = loan.getPayments()
                 .stream()
-                .mapToDouble(Payment::getAmountPaid)
+                .mapToDouble(payment -> payment.getAmountPaid() != null ? payment.getAmountPaid() : 0.0)
                 .sum();
-
         return loan.getPrincipleAmount() - amount;
     }
-
     private void checkBusinessRules(LoanApplication loanApplication){
         if (loanApplication.getStatus().equals(ApplicationStatus.REJECTED))
             throw new BankAccountException(String.format("La demande identifiée par %s a été rejetée",loanApplication.getIdentifier()));

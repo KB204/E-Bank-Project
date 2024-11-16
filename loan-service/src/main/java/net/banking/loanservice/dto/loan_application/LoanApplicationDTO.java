@@ -6,5 +6,4 @@ public record LoanApplicationDTO(
         String identifier,
         LoanType loanType,
         Integer loanTerm,
-        Double requestedAmount,
         String customerIdentity) {}
