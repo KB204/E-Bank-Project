@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.banking.loanservice.dto.Customer;
+import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.enums.ApplicationStatus;
 import net.banking.loanservice.enums.LoanType;
 

@@ -2,7 +2,7 @@ package net.banking.loanservice.service;
 
 import net.banking.loanservice.client.CustomerRestClient;
 import net.banking.loanservice.dao.LoanApplicationRepository;
-import net.banking.loanservice.dto.Customer;
+import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.dto.loan_application.LoanApplicationRequest;
 import net.banking.loanservice.dto.loan_application.LoanApplicationResponse;
 import net.banking.loanservice.entities.LoanApplication;

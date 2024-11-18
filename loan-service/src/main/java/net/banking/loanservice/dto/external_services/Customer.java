@@ -1,4 +1,4 @@
-package net.banking.loanservice.dto;
+package net.banking.loanservice.dto.external_services;
 
 import lombok.Builder;
 

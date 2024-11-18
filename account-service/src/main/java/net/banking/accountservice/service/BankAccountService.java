@@ -6,6 +6,7 @@ import net.banking.accountservice.dto.currentaccount.CurrentAccountRequest;
 import net.banking.accountservice.dto.currentaccount.CurrentAccountResponse;
 import net.banking.accountservice.dto.savingaccount.SavingAccountRequest;
 import net.banking.accountservice.dto.savingaccount.SavingAccountResponse;
+import net.banking.accountservice.enums.AccountStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,4 +19,7 @@ public interface BankAccountService {
     void createNewSavingAccount(SavingAccountRequest request);
     void changeAccountStatus(String rib, ChangeAccountStatus request);
     void deleteBankAccount(Long id);
+    BankAccountResponse getBankAccountByRibAndCustomer(String rib,String identity);
+    Double checkBankAccountBalance(String rib);
+    AccountStatus checkBankAccountStatus(String rib);
 }

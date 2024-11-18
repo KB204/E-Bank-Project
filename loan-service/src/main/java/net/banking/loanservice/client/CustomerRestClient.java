@@ -3,7 +3,7 @@ package net.banking.loanservice.client;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import net.banking.loanservice.config.FeignConfig;
-import net.banking.loanservice.dto.Customer;
+import net.banking.loanservice.dto.external_services.Customer;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

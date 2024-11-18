@@ -2,9 +2,8 @@ package net.banking.loanservice.service;
 
 import net.banking.loanservice.client.CustomerRestClient;
 import net.banking.loanservice.dao.LoanApplicationRepository;
-import net.banking.loanservice.dto.Customer;
+import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.dto.loan_application.LoanApplicationRequest;
-import net.banking.loanservice.dto.loan_application.LoanApplicationResponse;
 import net.banking.loanservice.entities.LoanApplication;
 import net.banking.loanservice.enums.LoanType;
 import net.banking.loanservice.exceptions.ResourceAlreadyExists;
@@ -18,11 +17,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 

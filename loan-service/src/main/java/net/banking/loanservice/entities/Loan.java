@@ -5,7 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import net.banking.loanservice.dto.Customer;
+import net.banking.loanservice.dto.external_services.BankAccount;
+import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.enums.LoanStatus;
 
 import java.time.LocalDate;
@@ -37,4 +38,7 @@ public abstract class Loan{
     private List<Payment> payments = new ArrayList<>();
     @Transient
     private Customer customer;
+    @Transient
+    private BankAccount bankAccount;
+    private String bankAccountRib;
 }

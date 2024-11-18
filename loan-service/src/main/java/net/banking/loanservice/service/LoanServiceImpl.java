@@ -1,8 +1,10 @@
 package net.banking.loanservice.service;
 
+import net.banking.loanservice.client.BankAccountRestClient;
 import net.banking.loanservice.client.CustomerRestClient;
 import net.banking.loanservice.dao.LoanApplicationRepository;
 import net.banking.loanservice.dao.LoanRepository;
+import net.banking.loanservice.dto.external_services.BankAccount;
 import net.banking.loanservice.dto.loan.LoanResponse;
 import net.banking.loanservice.dto.secrured_loan.SecuredLoanRequest;
 import net.banking.loanservice.dto.secrured_loan.SecuredLoanResponse;
@@ -26,12 +28,14 @@ public class LoanServiceImpl implements LoanService{
     private final LoanRepository loanRepository;
     private final LoanApplicationRepository loanApplicationRepository;
     private final CustomerRestClient restClient;
+    private final BankAccountRestClient bankAccountRestClient;
     private final LoanMapper mapper;
 
-    public LoanServiceImpl(LoanRepository loanRepository, LoanApplicationRepository loanApplicationRepository, CustomerRestClient restClient, LoanMapper mapper) {
+    public LoanServiceImpl(LoanRepository loanRepository, LoanApplicationRepository loanApplicationRepository, CustomerRestClient restClient, BankAccountRestClient bankAccountRestClient, LoanMapper mapper) {
         this.loanRepository = loanRepository;
         this.loanApplicationRepository = loanApplicationRepository;
         this.restClient = restClient;
+        this.bankAccountRestClient = bankAccountRestClient;
         this.mapper = mapper;
     }
 
@@ -81,6 +85,7 @@ public class LoanServiceImpl implements LoanService{
     public void createUnsecuredLoan(UnsecuredLoanRequest request) {
         LoanApplication loanApplication = loanApplicationRepository.findByIdentifierIgnoreCase(request.identifier())
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("La demande identifiée par %s n'existe pas",request.identifier())));
+        BankAccount bankAccount = bankAccountRestClient.findBankAccount(request.rib(), request.identity());
 
         checkBusinessRules(loanApplication);
 
@@ -89,6 +94,7 @@ public class LoanServiceImpl implements LoanService{
                 .principleAmount(loanApplication.getRequestedAmount())
                 .interest(loanApplication.getInterest())
                 .startedDate(LocalDate.now())
+                .bankAccountRib(bankAccount.rib())
                 .loanApplication(loanApplication)
                 .build();
 

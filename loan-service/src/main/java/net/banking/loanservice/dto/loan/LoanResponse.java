@@ -1,6 +1,6 @@
 package net.banking.loanservice.dto.loan;
 
-import net.banking.loanservice.dto.Customer;
+import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.dto.loan_application.LoanApplicationDTO;
 import net.banking.loanservice.dto.payment.PaymentResponseDTO;
 import net.banking.loanservice.enums.LoanStatus;
@@ -17,6 +17,6 @@ public record LoanResponse(
         LocalDate startedDate,
         LocalDate endDate,
         Double interest,
+        String bankAccountRib,
         LoanApplicationDTO loanApplication,
-        List<PaymentResponseDTO> payments,
         Customer customer) {}

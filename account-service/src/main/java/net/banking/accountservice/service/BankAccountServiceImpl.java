@@ -141,4 +141,26 @@ public class BankAccountServiceImpl implements BankAccountService {
                 .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
         bankAccountRepository.delete(bankAccount);
     }
+
+    @Override
+    public BankAccountResponse getBankAccountByRibAndCustomer(String rib,String identity) {
+        BankAccount bankAccount = bankAccountRepository.findByRibAndCustomerIdentity(rib, identity)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("Compte identifié par %s n'existe pas ou client identifié par %s n'existe pas",rib,identity)));
+
+        return mapper.bankAccountToDtoResponse(bankAccount);
+    }
+
+    @Override
+    public Double checkBankAccountBalance(String rib) {
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("Compte identifié par %s n'existe pas",rib)));
+        return bankAccount.getBalance();
+    }
+
+    @Override
+    public AccountStatus checkBankAccountStatus(String rib) {
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("Compte identifié par %s n'existe pas",rib)));
+        return bankAccount.getAccountStatus();
+    }
 }

@@ -64,6 +64,24 @@ public class BankAccountController {
         bankAccountService.changeAccountStatus(rib, request);
         return new ResponseEntity<>(String.format("Compte identifié par le rib %s a été modifié avec succès",rib),HttpStatus.ACCEPTED);
     }
+    @GetMapping("/findBankAccount/{rib}/{identity}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<BankAccountResponse> findBankAccount(@PathVariable String rib,@PathVariable String identity){
+        BankAccountResponse bankAccount = bankAccountService.getBankAccountByRibAndCustomer(rib,identity);
+        return ResponseEntity.ok(bankAccount);
+    }
+    @GetMapping("/bankAccountBalance/{rib}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Double> getBankAccountBalance(@PathVariable String rib){
+        Double balance = bankAccountService.checkBankAccountBalance(rib);
+        return ResponseEntity.ok(balance);
+    }
+    @GetMapping("/bankAccountStatus/{rib}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<String> getBankAccountStatus(@PathVariable String rib){
+        String status = String.valueOf(bankAccountService.checkBankAccountStatus(rib));
+        return ResponseEntity.ok(status);
+    }
     @DeleteMapping("/{id}")
     public ResponseEntity<BankAccountResponse> removeBankAccount(@PathVariable Long id) {
         bankAccountService.deleteBankAccount(id);
