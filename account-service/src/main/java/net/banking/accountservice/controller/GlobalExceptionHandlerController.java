@@ -2,10 +2,7 @@ package net.banking.accountservice.controller;
 
 import feign.FeignException;
 import net.banking.accountservice.dto.ErrorResponse;
-import net.banking.accountservice.exceptions.BankAccountException;
-import net.banking.accountservice.exceptions.InvalidOtpException;
-import net.banking.accountservice.exceptions.ResourceAlreadyExists;
-import net.banking.accountservice.exceptions.ResourceNotFoundException;
+import net.banking.accountservice.exceptions.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -55,6 +52,13 @@ public class GlobalExceptionHandlerController extends ResponseEntityExceptionHan
     }
     @ExceptionHandler(BankAccountException.class)
     final ResponseEntity<Object> handleBankAccountException(BankAccountException ex) {
+        List<String> details = new ArrayList<>();
+        details.add(ex.getLocalizedMessage());
+        ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(AccountCustomerException.class)
+    final ResponseEntity<Object> handleAccountCustomerException(AccountCustomerException ex) {
         List<String> details = new ArrayList<>();
         details.add(ex.getLocalizedMessage());
         ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);

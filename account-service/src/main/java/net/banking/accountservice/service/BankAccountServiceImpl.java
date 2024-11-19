@@ -9,6 +9,7 @@ import net.banking.accountservice.dto.currentaccount.CurrentAccountResponse;
 import net.banking.accountservice.dto.savingaccount.SavingAccountRequest;
 import net.banking.accountservice.dto.savingaccount.SavingAccountResponse;
 import net.banking.accountservice.enums.AccountStatus;
+import net.banking.accountservice.exceptions.AccountCustomerException;
 import net.banking.accountservice.exceptions.ResourceAlreadyExists;
 import net.banking.accountservice.exceptions.ResourceNotFoundException;
 import net.banking.accountservice.mapper.BankAccountMapper;
@@ -145,7 +146,7 @@ public class BankAccountServiceImpl implements BankAccountService {
     @Override
     public BankAccountResponse getBankAccountByRibAndCustomer(String rib,String identity) {
         BankAccount bankAccount = bankAccountRepository.findByRibAndCustomerIdentity(rib, identity)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("Compte identifié par %s n'existe pas ou client identifié par %s n'existe pas",rib,identity)));
+                .orElseThrow(() -> new AccountCustomerException(String.format("Compte identifié par %s n'existe pas ou client identifié par %s n'existe pas",rib,identity)));
 
         return mapper.bankAccountToDtoResponse(bankAccount);
     }

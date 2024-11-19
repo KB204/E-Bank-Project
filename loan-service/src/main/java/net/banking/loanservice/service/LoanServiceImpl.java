@@ -19,6 +19,8 @@ import net.banking.loanservice.mapper.LoanMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -92,17 +94,16 @@ public class LoanServiceImpl implements LoanService{
         UnsecuredLoan loan = UnsecuredLoan.builder()
                 .status(LoanStatus.ACTIVE)
                 .principleAmount(loanApplication.getRequestedAmount())
+                .remainingBalance(loanApplication.getRequestedAmount())
                 .interest(loanApplication.getInterest())
                 .startedDate(LocalDate.now())
                 .bankAccountRib(bankAccount.rib())
                 .loanApplication(loanApplication)
                 .build();
 
-        Double amount = calculateRemainingAmount(loan);
         Double treat = calculateMonthlyInstallment(loan);
         LocalDate endDate = calculateLoanEndingDate(loan);
 
-        loan.setRemainingBalance(amount);
         loan.setMonthlyInstallment(treat);
         loan.setEndDate(endDate);
 
@@ -114,18 +115,12 @@ public class LoanServiceImpl implements LoanService{
     private Double calculateMonthlyInstallment(Loan loan){
         double monthlyInterest = (loan.getInterest() / 100) / 12;
         int loanTerm = loan.getLoanApplication().getLoanTerm();
-        return (loan.getPrincipleAmount() * monthlyInterest * Math.pow(1 + monthlyInterest,loanTerm)) /
-                (Math.pow(1 + monthlyInterest,loanTerm) - 1);
-    }
-    private Double calculateRemainingAmount(Loan loan){
-        if (loan.getPayments() == null){
-            return loan.getPrincipleAmount();
-        }
-        double amount = loan.getPayments()
-                .stream()
-                .mapToDouble(payment -> payment.getAmountPaid() != null ? payment.getAmountPaid() : 0.0)
-                .sum();
-        return loan.getPrincipleAmount() - amount;
+        double treat = (loan.getPrincipleAmount() * monthlyInterest * Math.pow(1 + monthlyInterest, loanTerm)) /
+                (Math.pow(1 + monthlyInterest, loanTerm) - 1);
+
+        return BigDecimal.valueOf(treat)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
     private void checkBusinessRules(LoanApplication loanApplication){
         if (loanApplication.getStatus().equals(ApplicationStatus.REJECTED))

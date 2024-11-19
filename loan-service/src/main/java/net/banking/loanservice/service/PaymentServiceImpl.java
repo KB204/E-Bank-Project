@@ -57,8 +57,11 @@ public class PaymentServiceImpl implements PaymentService{
                 .build();
 
         checkBusinessRules(payment);
-
         paymentRepository.save(payment);
+
+        Double updateBalance = calculateRemainingAmount(loan);
+        loan.setRemainingBalance(updateBalance);
+        loanRepository.save(loan);
     }
     @Override
     public void changePaymentStatus(Long id, ChangeStatusDTO statusDTO) {
@@ -68,15 +71,23 @@ public class PaymentServiceImpl implements PaymentService{
         payment.setStatus(statusDTO.status());
         paymentRepository.save(payment);
     }
+
+    private Double calculateRemainingAmount(Loan loan){
+        double amount = loan.getPayments()
+                .stream()
+                .mapToDouble(Payment::getAmountPaid)
+                .sum();
+        return loan.getPrincipleAmount() - amount;
+    }
     private void checkBusinessRules(Payment payment){
         if (payment.getLoan().getStatus().equals(LoanStatus.CLOSED))
             throw new PaymentException(String.format("Le Crédit identifié par %s est cloturé",payment.getLoan().getLoanApplication().getIdentifier()));
         if (restClient.getBankAccountBalance(payment.getLoan().getBankAccountRib()) < payment.getAmountPaid())
             throw new PaymentException("Le solde du compte n’est pas suffisant pour effectuer cette opération");
-        /*if (restClient.getBankAccountStatus(payment.getLoan().getBankAccountRib()).equals("CLOSED"))
+        if (restClient.getBankAccountStatus(payment.getLoan().getBankAccountRib()).equals("CLOSED"))
             throw new PaymentException(String.format("Le compte identifié par %s est clôturé",payment.getLoan().getBankAccountRib()));
         if (restClient.getBankAccountStatus(payment.getLoan().getBankAccountRib()).equals("BLOCKED"))
             throw new PaymentException(String.format("Le compte identifié par %s est bloqué",payment.getLoan().getBankAccountRib()));
-        */
+
     }
 }

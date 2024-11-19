@@ -12,6 +12,6 @@ public interface BankAccountRestClient {
     BankAccount findBankAccount(@PathVariable String rib, @PathVariable String identity);
     @GetMapping("/api/accounts/bankAccountBalance/{rib}")
     Double getBankAccountBalance(@PathVariable String rib);
-    @GetMapping("/bankAccountStatus/{rib}")
+    @GetMapping("/api/accounts/bankAccountStatus/{rib}")
     String getBankAccountStatus(@PathVariable String rib);
 }

@@ -59,7 +59,7 @@ public class BankAccountController {
         bankAccountService.createNewSavingAccount(request);
         return new ResponseEntity<>(String.format("Compte a été créé avec succès pour le client identifié par %s",request.identity()),HttpStatus.CREATED);
     }
-    @PostMapping("/{rib}/changeStatus")
+    @PutMapping("/{rib}/changeStatus")
     public ResponseEntity<String> changeAccountStatusTo(@PathVariable String rib, @RequestBody @Valid ChangeAccountStatus request) {
         bankAccountService.changeAccountStatus(rib, request);
         return new ResponseEntity<>(String.format("Compte identifié par le rib %s a été modifié avec succès",rib),HttpStatus.ACCEPTED);

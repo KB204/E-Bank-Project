@@ -8,6 +8,7 @@ public class CustomErrorDecoder implements ErrorDecoder {
     public Exception decode(String s, Response response) {
         return switch (response.status()) {
             case 404 -> new ResourceNotFoundException("Client n'existe pas");
+            case 400 -> new ResourceNotFoundException("Compte ou client n'existe pas");
             default -> new Exception("Un Problème est servenu réessayer plus tard");
         };
     }
