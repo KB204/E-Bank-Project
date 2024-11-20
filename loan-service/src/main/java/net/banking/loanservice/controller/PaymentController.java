@@ -1,6 +1,7 @@
 package net.banking.loanservice.controller;
 
 import jakarta.validation.Valid;
+import net.banking.loanservice.dto.loan.LoanDetailsDTO;
 import net.banking.loanservice.dto.payment.ChangeStatusDTO;
 import net.banking.loanservice.dto.payment.PaymentRequest;
 import net.banking.loanservice.dto.payment.PaymentResponse;
@@ -30,7 +31,11 @@ public class PaymentController {
         service.makeNewPayment(request);
         return new ResponseEntity<>(String.format("Paiement du montant %s MAD pour le crédit identifié par %s a été effectué avec succès",request.amount(),request.identifier()),HttpStatus.CREATED);
     }
-
+    @GetMapping("/{identifier}/paymentHistory")
+    @ResponseStatus(HttpStatus.OK)
+    LoanDetailsDTO getLoanPaymentsHistory(@PathVariable String identifier) {
+        return service.loanPaymentHistory(identifier);
+    }
     @PutMapping("{id}/changePaymentStatus")
     ResponseEntity<String> updateLoanPaymentStatus(@PathVariable Long id,@RequestBody @Valid ChangeStatusDTO request){
         service.changePaymentStatus(id, request);

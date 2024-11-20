@@ -2,11 +2,9 @@ package net.banking.loanservice.dto.loan;
 
 import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.dto.loan_application.LoanApplicationDTO;
-import net.banking.loanservice.dto.payment.PaymentResponseDTO;
 import net.banking.loanservice.enums.LoanStatus;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public record LoanResponse(
         Long id,
