@@ -59,6 +59,7 @@ public class PaymentServiceImpl implements PaymentService{
                 .identifier(identifier)
                 .principleAmount(loan.getPrincipleAmount())
                 .monthlyInstallment(loan.getMonthlyInstallment())
+                .status(loan.getStatus())
                 .bankAccountRib(loan.getBankAccountRib())
                 .payments(paymentsResponse)
                 .build();
@@ -98,6 +99,7 @@ public class PaymentServiceImpl implements PaymentService{
     private Double calculateRemainingAmount(Loan loan){
         double amount = loan.getPayments()
                 .stream()
+                .filter(payment -> payment.getStatus().equals(PaymentStatus.SUCCESS))
                 .mapToDouble(Payment::getAmountPaid)
                 .sum();
         return loan.getPrincipleAmount() - amount;

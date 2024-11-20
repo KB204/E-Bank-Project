@@ -16,6 +16,12 @@ import net.banking.loanservice.enums.LoanStatus;
 import net.banking.loanservice.exceptions.BankAccountException;
 import net.banking.loanservice.exceptions.ResourceNotFoundException;
 import net.banking.loanservice.mapper.LoanMapper;
+import net.banking.loanservice.service.specification.LoanSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +29,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -42,14 +49,23 @@ public class LoanServiceImpl implements LoanService{
     }
 
     @Override
-    public List<LoanResponse> findAllLoans() {
-        return loanRepository.findAll()
-                .stream()
+    public Page<LoanResponse> findAllLoans(String identifier, Double amount, String status, LocalDate started,LocalDate ended,
+                                           LocalDate start, LocalDate end, Pageable pageable) {
+
+        Specification<Loan> specification = LoanSpecification.filterWithoutAnyConditions()
+                .and(LoanSpecification.identifierEqual(identifier))
+                .and(LoanSpecification.amountEqual(amount))
+                .and(LoanSpecification.statusLike(status))
+                .and(LoanSpecification.startedDateLike(started))
+                .and(LoanSpecification.endDateLike(ended))
+                .and(LoanSpecification.loanBetween(start, end));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("startedDate").descending());
+
+        return loanRepository.findAll(specification,pageable)
                 .map(loan -> {
                     loan.setCustomer(restClient.fetchCustomerByIdentity(loan.getLoanApplication().getCustomerIdentity()));
                     return mapper.loanObjectToDtoResponse(loan);
-                })
-                .toList();
+                });
     }
 
     @Override
@@ -66,16 +82,24 @@ public class LoanServiceImpl implements LoanService{
     }
 
     @Override
-    public List<UnsecuredLoanResponse> findAllUnsecuredLoans() {
-        return loanRepository.findAll()
-                .stream()
-                .filter(loan -> loan instanceof UnsecuredLoan)
+    public Page<UnsecuredLoanResponse> findAllUnsecuredLoans(String identifier, Double amount, String status, LocalDate started,LocalDate ended,
+                                                             LocalDate start, LocalDate end, Pageable pageable) {
+
+        Specification<Loan> specification = LoanSpecification.unsecuredLoansOnly()
+                .and(LoanSpecification.identifierEqual(identifier))
+                .and(LoanSpecification.amountEqual(amount))
+                .and(LoanSpecification.statusLike(status))
+                .and(LoanSpecification.startedDateLike(started))
+                .and(LoanSpecification.endDateLike(ended))
+                .and(LoanSpecification.loanBetween(start, end));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("startedDate").descending());
+
+        return loanRepository.findAll(specification,pageable)
                 .map(loan -> {
                     UnsecuredLoan unsecuredLoan = (UnsecuredLoan) loan;
                     unsecuredLoan.setCustomer(restClient.fetchCustomerByIdentity(unsecuredLoan.getLoanApplication().getCustomerIdentity()));
                     return mapper.unsecuredLoanToDtoResponse(unsecuredLoan);
-                })
-                .toList();
+                });
     }
 
     @Override
@@ -106,6 +130,7 @@ public class LoanServiceImpl implements LoanService{
 
         loan.setMonthlyInstallment(treat);
         loan.setEndDate(endDate);
+        checkBusinessRules(loan);
 
         loanRepository.save(loan);
     }
@@ -127,5 +152,10 @@ public class LoanServiceImpl implements LoanService{
             throw new BankAccountException(String.format("La demande identifiée par %s a été rejetée",loanApplication.getIdentifier()));
         if (loanApplication.getStatus().equals(ApplicationStatus.PENDING))
             throw new BankAccountException(String.format("La demande identifiée par %s est en cours de traitement",loanApplication.getIdentifier()));
+    }
+    private void checkBusinessRules(Loan loan){
+        Optional.ofNullable(loan.getRemainingBalance())
+                .filter(remainingBalance -> Double.compare(remainingBalance,0.0) == 0)
+                .ifPresent(remainingBalance -> loan.setStatus(LoanStatus.CLOSED));
     }
 }

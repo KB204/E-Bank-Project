@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/accounts")
+@CrossOrigin(origins = "http://localhost:3000")
 public class BankAccountController {
     private final BankAccountService bankAccountService;
     public BankAccountController(BankAccountService bankAccountService) {

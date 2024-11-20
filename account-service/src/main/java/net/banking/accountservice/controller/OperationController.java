@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/operations")
+@CrossOrigin(origins = "http://localhost:3000")
 public class OperationController {
     private final OperationService service;
 

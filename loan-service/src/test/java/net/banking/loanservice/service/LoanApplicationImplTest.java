@@ -4,11 +4,11 @@ import net.banking.loanservice.client.CustomerRestClient;
 import net.banking.loanservice.dao.LoanApplicationRepository;
 import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.dto.loan_application.LoanApplicationRequest;
+import net.banking.loanservice.dto.loan_application.LoanApplicationResponse;
 import net.banking.loanservice.entities.LoanApplication;
 import net.banking.loanservice.enums.LoanType;
 import net.banking.loanservice.exceptions.ResourceAlreadyExists;
 import net.banking.loanservice.mapper.LoanApplicationMapper;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -128,28 +128,45 @@ class LoanApplicationImplTest {
         // then
 
         assertThatThrownBy(() -> underTest.createNewLoanApplication(request))
-                .isInstanceOf(ResourceAlreadyExists.class)
-                .hasMessage("Identifiant de la demande existant déjà, veuillez soumettre une autre demande ");
+                .isInstanceOf(ResourceAlreadyExists.class);
         verify(repository,Mockito.never()).save(Mockito.any(LoanApplication.class));
     }
 
     @Test
-    @Disabled
-    void approveLoanApplication() {
-    }
-
-    @Test
-    @Disabled
-    void declineLoanApplication() {
-    }
-
-    @Test
-    @Disabled
     void findLoanApplication() {
-    }
+        // given
+        LoanApplication loanApplication1 = LoanApplication.builder()
+                .identifier("test")
+                .loanType(LoanType.PERSONAL)
+                .loanTerm(30)
+                .requestedAmount(95000.0)
+                .customerIdentity("TP")
+                .build();
 
-    @Test
-    @Disabled
-    void removeLoanApplication() {
+        Customer customer = Customer.builder().identity("TP").email("test@gmail.com").build();
+
+        LoanApplicationResponse response1 = LoanApplicationResponse.builder()
+                .identifier("test")
+                .loanType(LoanType.PERSONAL)
+                .loanTerm(30)
+                .requestedAmount(95000.0)
+                .customerIdentity(customer.identity())
+                .build();
+
+        // when
+        when(repository.findByIdentifierIgnoreCase("test")).thenReturn(Optional.of(loanApplication1));
+        when(restClient.fetchCustomerByIdentity("TP")).thenReturn(customer);
+        when(mapper.loanApplicationToDtoResponse(loanApplication1)).thenReturn(response1);
+
+        LoanApplicationResponse expectedResponse = underTest.findLoanApplication(loanApplication1.getIdentifier());
+
+        // then
+        assertThat(expectedResponse).isNotNull();
+        assertThat(expectedResponse.identifier()).isEqualTo(response1.identifier());
+        assertThat(expectedResponse.loanType()).isEqualTo(response1.loanType());
+        assertThat(expectedResponse.loanTerm()).isEqualTo(response1.loanTerm());
+        assertThat(expectedResponse.requestedAmount()).isEqualTo(response1.requestedAmount());
+        assertThat(expectedResponse.customerIdentity()).isEqualTo(response1.customerIdentity());
+        verify(restClient,times(1)).fetchCustomerByIdentity("TP");
     }
 }

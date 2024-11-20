@@ -17,7 +17,8 @@ public class LoanApplicationSpec {
     public static Specification<LoanApplication> loanTypeLike(String loanType){
         return (root, query, criteriaBuilder) ->
                 loanType == null || loanType.trim().isEmpty() ? criteriaBuilder.conjunction() :
-                        criteriaBuilder.equal(criteriaBuilder.lower(root.get("loanType")),loanType.toLowerCase());
+                        criteriaBuilder.equal(criteriaBuilder.lower(root.get("loanType")),
+                                "%" + loanType.toLowerCase() + "%");
     }
     public static Specification<LoanApplication> loanTermEqual(Integer loanTerm){
         return (root, query, criteriaBuilder) ->
@@ -35,7 +36,8 @@ public class LoanApplicationSpec {
     public static Specification<LoanApplication> statusLike(String status){
         return (root, query, criteriaBuilder) ->
                 status == null || status.trim().isEmpty() ? criteriaBuilder.conjunction() :
-                        criteriaBuilder.equal(criteriaBuilder.lower(root.get("status")),status.toLowerCase());
+                        criteriaBuilder.equal(criteriaBuilder.lower(root.get("status")),
+                                "%" + status.toLowerCase() + "%");
     }
     public static Specification<LoanApplication> customerEqual(String customerIdentity) {
         return (root, query, criteriaBuilder) ->
