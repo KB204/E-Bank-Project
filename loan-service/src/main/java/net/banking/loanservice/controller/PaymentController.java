@@ -6,11 +6,12 @@ import net.banking.loanservice.dto.payment.ChangeStatusDTO;
 import net.banking.loanservice.dto.payment.PaymentRequest;
 import net.banking.loanservice.dto.payment.PaymentResponse;
 import net.banking.loanservice.service.PaymentService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -22,8 +23,14 @@ public class PaymentController {
     }
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    List<PaymentResponse> findAllLoansPayments(){
-        return service.getAllPayments();
+    Page<PaymentResponse> findAllLoansPayments(
+            @RequestParam(required = false) Double amount,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String date,
+            Pageable pageable){
+        return service.getAllPayments(amount, minAmount, maxAmount, status, date, pageable);
     }
 
     @PostMapping("/newPayment")
@@ -33,8 +40,13 @@ public class PaymentController {
     }
     @GetMapping("/{identifier}/paymentHistory")
     @ResponseStatus(HttpStatus.OK)
-    LoanDetailsDTO getLoanPaymentsHistory(@PathVariable String identifier) {
-        return service.loanPaymentHistory(identifier);
+    LoanDetailsDTO getLoanPaymentsHistory(
+            @PathVariable String identifier,
+            @RequestParam(required = false) Double amount,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String date,
+            Pageable pageable) {
+        return service.loanPaymentHistory(identifier, amount, status, date, pageable);
     }
     @PutMapping("{id}/changePaymentStatus")
     ResponseEntity<String> updateLoanPaymentStatus(@PathVariable Long id,@RequestBody @Valid ChangeStatusDTO request){

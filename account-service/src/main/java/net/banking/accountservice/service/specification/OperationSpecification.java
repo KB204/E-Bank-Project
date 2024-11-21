@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 public class OperationSpecification {
 
@@ -19,7 +20,8 @@ public class OperationSpecification {
     }
     public static Specification<BankAccountTransaction> amountBetween(Double minAmount,Double maxAmount){
         return (root, query, criteriaBuilder) ->
-                minAmount == null || maxAmount == null ? criteriaBuilder.conjunction() : criteriaBuilder.between(root.get("amount"),minAmount,maxAmount);
+                minAmount == null || maxAmount == null ? criteriaBuilder.conjunction() :
+                        criteriaBuilder.between(root.get("amount"),minAmount,maxAmount);
     }
 
     public static Specification<BankAccountTransaction> transactionTypeEqual(String transactionType){
@@ -55,31 +57,9 @@ public class OperationSpecification {
     }
 
     public static Specification<BankAccountTransaction> transactionDateLike(String createdAt) {
-        if (createdAt == null || createdAt.trim().isEmpty() ){
-            return null;
-        } else {
-            return (root, query, criteriaBuilder) -> {
-                Predicate dateP = criteriaBuilder.conjunction();
-                switch (createdAt.length()) {
-                    case 4 -> dateP = criteriaBuilder.and(dateP,
-                            criteriaBuilder.equal(criteriaBuilder.function("year", Integer.class, root.get("createdAt")), Integer.parseInt(createdAt)));
-                    case 7 -> {
-                        String[] dateParts = createdAt.split("-");
-                        dateP = criteriaBuilder.and(dateP,
-                                criteriaBuilder.equal(criteriaBuilder.function("year", Integer.class, root.get("createdAt")), Integer.parseInt(dateParts[0])),
-                                criteriaBuilder.equal(criteriaBuilder.function("month", Integer.class, root.get("createdAt")), Integer.parseInt(dateParts[1])));
-                    }
-                    case 10 -> {
-                        String[] dateParts = createdAt.split("-");
-                        dateP = criteriaBuilder.and(dateP,
-                                criteriaBuilder.equal(criteriaBuilder.function("year",Integer.class, root.get("createdAt")), Integer.parseInt(dateParts[0])),
-                                criteriaBuilder.equal(criteriaBuilder.function("month", Integer.class, root.get("createdAt")), Integer.parseInt(dateParts[1])),
-                                criteriaBuilder.equal(criteriaBuilder.function("day", Integer.class, root.get("createdAt")), Integer.parseInt(dateParts[2])));
-                    }
-                    default -> {}
-                }
-                return dateP;
-            };
-        }
+        return (root, query, criteriaBuilder) ->
+                Optional.ofNullable(createdAt)
+                        .map(date -> criteriaBuilder.like(root.get("createdAt").as(String.class),createdAt + "%"))
+                        .orElse(null);
     }
 }

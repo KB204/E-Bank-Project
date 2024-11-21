@@ -30,8 +30,8 @@ public class LoanController {
             @RequestParam(required = false) String identifier,
             @RequestParam(required = false) Double amount,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) LocalDate started,
-            @RequestParam(required = false) LocalDate ended,
+            @RequestParam(required = false) String started,
+            @RequestParam(required = false) String ended,
             @RequestParam(required = false) LocalDate start,
             @RequestParam(required = false) LocalDate end,
             Pageable pageable){
@@ -47,8 +47,8 @@ public class LoanController {
             @RequestParam(required = false) String identifier,
             @RequestParam(required = false) Double amount,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) LocalDate started,
-            @RequestParam(required = false) LocalDate ended,
+            @RequestParam(required = false) String started,
+            @RequestParam(required = false) String ended,
             @RequestParam(required = false) LocalDate start,
             @RequestParam(required = false) LocalDate end,
             Pageable pageable){

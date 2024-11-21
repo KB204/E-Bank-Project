@@ -46,7 +46,7 @@ public class OperationServiceImpl implements OperationService{
     @Override
     public Page<OperationResponse> getAllOperations(Double amount, Double minAmount, Double maxAmount ,String transactionType, String rib, String customerIdentity,
                                                     LocalDateTime startDate, LocalDateTime endDate, String createdAt, Pageable pageable) {
-        Specification<BankAccountTransaction> specification = Specification.where(OperationSpecification.filterWithoutConditions())
+        Specification<BankAccountTransaction> specification = OperationSpecification.filterWithoutConditions()
                 .and(OperationSpecification.amountEqual(amount))
                 .and(OperationSpecification.amountBetween(minAmount,maxAmount))
                 .and(OperationSpecification.transactionTypeEqual(transactionType))

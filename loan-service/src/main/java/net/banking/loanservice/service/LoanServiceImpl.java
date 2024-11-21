@@ -49,13 +49,13 @@ public class LoanServiceImpl implements LoanService{
     }
 
     @Override
-    public Page<LoanResponse> findAllLoans(String identifier, Double amount, String status, LocalDate started,LocalDate ended,
+    public Page<LoanResponse> findAllLoans(String identifier, Double amount, String status, String started,String ended,
                                            LocalDate start, LocalDate end, Pageable pageable) {
 
         Specification<Loan> specification = LoanSpecification.filterWithoutAnyConditions()
                 .and(LoanSpecification.identifierEqual(identifier))
                 .and(LoanSpecification.amountEqual(amount))
-                .and(LoanSpecification.statusLike(status))
+                .and(LoanSpecification.statusEqual(status))
                 .and(LoanSpecification.startedDateLike(started))
                 .and(LoanSpecification.endDateLike(ended))
                 .and(LoanSpecification.loanBetween(start, end));
@@ -82,13 +82,13 @@ public class LoanServiceImpl implements LoanService{
     }
 
     @Override
-    public Page<UnsecuredLoanResponse> findAllUnsecuredLoans(String identifier, Double amount, String status, LocalDate started,LocalDate ended,
+    public Page<UnsecuredLoanResponse> findAllUnsecuredLoans(String identifier, Double amount, String status, String started,String ended,
                                                              LocalDate start, LocalDate end, Pageable pageable) {
 
-        Specification<Loan> specification = LoanSpecification.unsecuredLoansOnly()
+        Specification<Loan> specification = Specification.where(LoanSpecification.unsecuredLoansOnly())
                 .and(LoanSpecification.identifierEqual(identifier))
                 .and(LoanSpecification.amountEqual(amount))
-                .and(LoanSpecification.statusLike(status))
+                .and(LoanSpecification.statusEqual(status))
                 .and(LoanSpecification.startedDateLike(started))
                 .and(LoanSpecification.endDateLike(ended))
                 .and(LoanSpecification.loanBetween(start, end));

@@ -29,23 +29,23 @@ public class LoanSpecification {
                         .map(loan -> criteriaBuilder.equal(root.get("principleAmount"),amount))
                         .orElse(null);
     }
-    public static Specification<Loan> statusLike(String status){
+    public static Specification<Loan> statusEqual(String status){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(status)
                         .map(loan -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("status")),
-                                "%" + status.toLowerCase() + "%"))
+                                status.toLowerCase()))
                         .orElse(null);
     }
-    public static Specification<Loan> startedDateLike(LocalDate started){
+    public static Specification<Loan> startedDateLike(String started){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(started)
-                        .map(date -> criteriaBuilder.like(root.get("startedDate").as(String.class),date.toString()))
+                        .map(date -> criteriaBuilder.like(root.get("startedDate").as(String.class),started + "%"))
                         .orElse(null);
     }
-    public static Specification<Loan> endDateLike(LocalDate ended){
+    public static Specification<Loan> endDateLike(String ended){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(ended)
-                        .map(date -> criteriaBuilder.like(root.get("endDate").as(String.class),date.toString()))
+                        .map(date -> criteriaBuilder.like(root.get("endDate").as(String.class),ended + "%"))
                         .orElse(null);
     }
     public static Specification<Loan> loanBetween(LocalDate start, LocalDate end) {
@@ -54,12 +54,12 @@ public class LoanSpecification {
 
             if (start != null) {
                 predicate = criteriaBuilder.and(predicate,
-                        criteriaBuilder.greaterThanOrEqualTo(root.get("startedDate").as(String.class), start.toString()));
+                        criteriaBuilder.greaterThanOrEqualTo(root.get("startedDate"),start));
             }
 
             if (end != null) {
                 predicate = criteriaBuilder.and(predicate,
-                        criteriaBuilder.lessThanOrEqualTo(root.get("startedDate").as(String.class), end.toString()));
+                        criteriaBuilder.lessThanOrEqualTo(root.get("startedDate"), end));
             }
 
             return predicate;

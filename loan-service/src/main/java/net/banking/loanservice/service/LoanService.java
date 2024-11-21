@@ -12,10 +12,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface LoanService {
-    Page<LoanResponse> findAllLoans(String identifier, Double amount, String status, LocalDate started, LocalDate ended,
+    Page<LoanResponse> findAllLoans(String identifier, Double amount, String status, String started, String ended,
                                     LocalDate start, LocalDate end, Pageable pageable);
     List<SecuredLoanResponse> findAllSecuredLoans();
-    Page<UnsecuredLoanResponse> findAllUnsecuredLoans(String identifier, Double amount, String status, LocalDate started,LocalDate ended,
+    Page<UnsecuredLoanResponse> findAllUnsecuredLoans(String identifier, Double amount, String status, String started,String ended,
                                                       LocalDate start, LocalDate end, Pageable pageable);
     void createSecuredLoan(SecuredLoanRequest request);
     void createUnsecuredLoan(UnsecuredLoanRequest request);

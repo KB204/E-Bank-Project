@@ -42,7 +42,7 @@ public class BankAccountServiceImpl implements BankAccountService {
     @Override
     public Page<BankAccountResponse> getAllBankAccounts(String rib, String branch, String accountStatus,
                                                         String identity, Pageable pageable) {
-        Specification<BankAccount> specification = Specification.where(BankAccountSpecification.filterWithoutConditions())
+        Specification<BankAccount> specification = BankAccountSpecification.filterWithoutConditions()
                 .and(BankAccountSpecification.ribEqual(rib))
                 .and(BankAccountSpecification.branchLike(branch))
                 .and(BankAccountSpecification.statusEqual(accountStatus))

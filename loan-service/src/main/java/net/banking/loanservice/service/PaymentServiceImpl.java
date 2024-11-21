@@ -15,6 +15,12 @@ import net.banking.loanservice.enums.PaymentStatus;
 import net.banking.loanservice.exceptions.PaymentException;
 import net.banking.loanservice.exceptions.ResourceNotFoundException;
 import net.banking.loanservice.mapper.PaymentMapper;
+import net.banking.loanservice.service.specification.PaymentSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,19 +43,32 @@ public class PaymentServiceImpl implements PaymentService{
     }
 
     @Override
-    public List<PaymentResponse> getAllPayments() {
-        return paymentRepository.findAll()
-                .stream()
-                .map(mapper::paymentToDtoResponse)
-                .toList();
+    public Page<PaymentResponse> getAllPayments(Double amount, Double minAmount, Double maxAmount, String status,
+                                                String date, Pageable pageable) {
+
+        Specification<Payment> specification = PaymentSpecification.filterWithoutConditions()
+                .and(PaymentSpecification.amountEqual(amount))
+                .and(PaymentSpecification.amountBetween(minAmount, maxAmount))
+                .and(PaymentSpecification.statusLike(status))
+                .and(PaymentSpecification.dateLike(date));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("paymentDate").descending());
+        return paymentRepository.findAll(specification,pageable)
+                .map(mapper::paymentToDtoResponse);
     }
 
     @Override
-    public LoanDetailsDTO loanPaymentHistory(String identifier) {
+    public LoanDetailsDTO loanPaymentHistory(String identifier,Double amount,String status, String date, Pageable pageable) {
+
         Loan loan = loanRepository.findByLoanApplication_Identifier(identifier)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Le Crédit identifié par %s n'existe pas",identifier)));
 
-        List<Payment> payments = paymentRepository.findAll();
+        Specification<Payment> specification = Specification.where(PaymentSpecification.identifierEqual(identifier))
+                .and(PaymentSpecification.amountEqual(amount))
+                .and(PaymentSpecification.statusLike(status))
+                .and(PaymentSpecification.dateLike(date));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("paymentDate").descending());
+
+        Page<Payment> payments = paymentRepository.findAll(specification,pageable);
         List<PaymentResponseDTO> paymentsResponse = payments
                 .stream()
                 .map(mapper::paymentToDetailsResponse)
