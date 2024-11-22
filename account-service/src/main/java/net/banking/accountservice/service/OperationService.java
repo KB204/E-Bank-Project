@@ -1,5 +1,6 @@
 package net.banking.accountservice.service;
 
+import net.banking.accountservice.dto.DebitAccountRequest;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.*;
 import org.springframework.data.domain.Page;
@@ -13,5 +14,6 @@ public interface OperationService {
     void completeTransferOperation(String rib, CompleteOperationDTO request);
     void withdrawalOperation(String rib , WithdrawRequest request);
     void completeWithdrawalOperation(String rib , CompleteWithdrawDTO request);
+    void debitAccount(DebitAccountRequest request);
     BankAccountDetails bankAccountHistory(String rib,Double amount,String transactionType,LocalDateTime startDate,LocalDateTime endDate,Pageable pageable);
 }

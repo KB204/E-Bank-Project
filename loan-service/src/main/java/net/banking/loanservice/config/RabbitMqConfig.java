@@ -17,6 +17,12 @@ public class RabbitMqConfig {
     private String notificationExchange;
     @Value("${rabbitmq.binding.notification.name}")
     private String notificationRoutingKey;
+    @Value("${rabbitmq.queue.payment.name}")
+    private String paymentQueue;
+    @Value("${rabbitmq.exchange.payment.name}")
+    private String paymentExchange;
+    @Value("${rabbitmq.binding.payment.name}")
+    private String paymentRoutingKey;
 
     @Bean
     public Queue loanNotificationQueue(){
@@ -24,15 +30,28 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    public Queue newPaymentQueue() { return new Queue(paymentQueue); }
+
+    @Bean
     public DirectExchange loanNotificationExchange(){
         return new DirectExchange(notificationExchange);
     }
+
+    @Bean
+    public DirectExchange newPaymentExchange() { return new DirectExchange(paymentExchange); }
 
     @Bean
     public Binding notificationBinding(){
         return BindingBuilder.bind(loanNotificationQueue())
                 .to(loanNotificationExchange())
                 .with(notificationRoutingKey);
+    }
+
+    @Bean
+    public Binding newPaymentBinding(){
+        return BindingBuilder.bind(newPaymentQueue())
+                .to(newPaymentExchange())
+                .with(paymentRoutingKey);
     }
 
     @Bean

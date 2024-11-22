@@ -1,6 +1,7 @@
 package net.banking.accountservice.service;
 
 import net.banking.accountservice.client.CustomerRest;
+import net.banking.accountservice.dto.DebitAccountRequest;
 import net.banking.accountservice.dto.bankaccount.BankAccountDetails;
 import net.banking.accountservice.dto.operation.*;
 import net.banking.accountservice.enums.AccountStatus;
@@ -14,6 +15,7 @@ import net.banking.accountservice.model.SavingAccount;
 import net.banking.accountservice.repository.BankAccountRepository;
 import net.banking.accountservice.repository.TransactionRepository;
 import net.banking.accountservice.service.specification.OperationSpecification;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -95,7 +97,6 @@ public class OperationServiceImpl implements OperationService{
         codeVerificationService.verifyOtpCode(rib, request.otp());
         performWithdrawal(bankAccount,request);
     }
-
     @Override
     public BankAccountDetails bankAccountHistory(String rib,Double amount,String transactionType,LocalDateTime startDate,
                                                  LocalDateTime endDate,Pageable pageable) {
@@ -117,6 +118,15 @@ public class OperationServiceImpl implements OperationService{
                 .rib(bankAccount.getRib())
                 .transaction(transactionDto)
                 .build();
+    }
+    @Override
+    @RabbitListener(queues = "${rabbitmq.queue.payment.name}")
+    public void debitAccount(DebitAccountRequest request) {
+        BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(request.rib())
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("Compte identifié par %s n'existe pas",request.rib())));
+
+        bankAccount.setBalance(bankAccount.getBalance() - request.amount());
+        transactionRepository.save(createTransaction(bankAccount, request.amount(), "Paiement de la traite de crédit d'un montant de "+request.amount()+bankAccount.getCurrency()));
     }
     private BankAccount findBankAccount(String rib, String identity) {
         return bankAccountRepository.findByRibAndCustomerIdentity(rib, identity)
@@ -176,6 +186,8 @@ public class OperationServiceImpl implements OperationService{
             throw new BankAccountException("Vous ne pouvez pas effectuer un virement a partir d'un compte epargne");
         if (amount > 6000.0)
             throw new BankAccountException("Vous avez dépassé le plafond autorisé");
+        if (amount < 100.0)
+            throw new BankAccountException("Le montant ne peut pas être inférieur a 100");
         if (!Objects.equals(bankAccountFrom.getCurrency(), bankAccountTo.getCurrency()))
             throw new BankAccountException("Problème de devise, vous n'avez pas le droit d'effectuer cette action veuillez contacter votre banque");
     }
@@ -188,5 +200,7 @@ public class OperationServiceImpl implements OperationService{
             throw new BankAccountException("Le solde du compte est inférieur au montant souhaité à envoyer");
         if (amount > 6000.0)
             throw new BankAccountException("Vous avez dépassé le plafond autorisé");
+        if (amount < 100.0)
+            throw new BankAccountException("Le montant ne peut pas être inférieur a 100");
     }
 }

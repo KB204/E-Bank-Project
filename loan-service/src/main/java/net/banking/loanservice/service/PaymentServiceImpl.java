@@ -34,12 +34,14 @@ public class PaymentServiceImpl implements PaymentService{
     private final LoanRepository loanRepository;
     private final PaymentMapper mapper;
     private final BankAccountRestClient restClient;
+    private final SendNotificationService notificationService;
 
-    public PaymentServiceImpl(PaymentRepository paymentRepository, LoanRepository loanRepository, PaymentMapper mapper, BankAccountRestClient restClient) {
+    public PaymentServiceImpl(PaymentRepository paymentRepository, LoanRepository loanRepository, PaymentMapper mapper, BankAccountRestClient restClient, SendNotificationService notificationService) {
         this.paymentRepository = paymentRepository;
         this.loanRepository = loanRepository;
         this.mapper = mapper;
         this.restClient = restClient;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -101,6 +103,7 @@ public class PaymentServiceImpl implements PaymentService{
 
         checkBusinessRules(payment);
         paymentRepository.save(payment);
+        notificationService.debitAccountEvent(loan.getBankAccountRib(),payment.getAmountPaid());
 
         Double updateBalance = calculateRemainingAmount(loan);
         loan.setRemainingBalance(updateBalance);

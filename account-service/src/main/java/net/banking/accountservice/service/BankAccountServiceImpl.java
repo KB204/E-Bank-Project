@@ -137,13 +137,6 @@ public class BankAccountServiceImpl implements BankAccountService {
         bankAccountRepository.save(bankAccount);
     }
     @Override
-    public void deleteBankAccount(Long id) {
-        BankAccount bankAccount = bankAccountRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
-        bankAccountRepository.delete(bankAccount);
-    }
-
-    @Override
     public BankAccountResponse getBankAccountByRibAndCustomer(String rib,String identity) {
         BankAccount bankAccount = bankAccountRepository.findByRibAndCustomerIdentity(rib, identity)
                 .orElseThrow(() -> new AccountCustomerException(String.format("Compte identifié par %s n'existe pas ou client identifié par %s n'existe pas",rib,identity)));
@@ -163,5 +156,11 @@ public class BankAccountServiceImpl implements BankAccountService {
         BankAccount bankAccount = bankAccountRepository.findByRibIgnoreCase(rib)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Compte identifié par %s n'existe pas",rib)));
         return bankAccount.getAccountStatus();
+    }
+    @Override
+    public void deleteBankAccount(Long id) {
+        BankAccount bankAccount = bankAccountRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Compte n'existe pas"));
+        bankAccountRepository.delete(bankAccount);
     }
 }

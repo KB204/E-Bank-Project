@@ -2,6 +2,7 @@ package net.banking.loanservice.service;
 
 import net.banking.loanservice.dao.LoanApplicationRepository;
 import net.banking.loanservice.dto.EmailDetails;
+import net.banking.loanservice.dto.external_services.DebitAccountRequest;
 import net.banking.loanservice.entities.LoanApplication;
 import net.banking.loanservice.exceptions.ResourceNotFoundException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -12,6 +13,11 @@ import org.springframework.stereotype.Service;
 public class SendNotificationImpl implements SendNotificationService{
     private final RabbitTemplate rabbitTemplate;
     private final LoanApplicationRepository repository;
+
+    @Value("${rabbitmq.exchange.payment.name}")
+    private String paymentExchange;
+    @Value("${rabbitmq.binding.payment.name}")
+    private String paymentRoutingKey;
 
     @Value("${rabbitmq.exchange.notification.name}")
     private String emailExchange;
@@ -105,5 +111,11 @@ public class SendNotificationImpl implements SendNotificationService{
                 .build();
         rabbitTemplate.convertAndSend(emailExchange,emailRoutingKey,emailDetails);
 
+    }
+
+    @Override
+    public void debitAccountEvent(String rib,Double amount) {
+        rabbitTemplate.convertAndSend(paymentExchange,paymentRoutingKey,
+                new DebitAccountRequest(rib, amount));
     }
 }
