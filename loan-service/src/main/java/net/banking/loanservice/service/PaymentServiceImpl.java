@@ -103,11 +103,13 @@ public class PaymentServiceImpl implements PaymentService{
 
         checkBusinessRules(payment);
         paymentRepository.save(payment);
-        notificationService.debitAccountEvent(loan.getBankAccountRib(),payment.getAmountPaid());
 
-        Double updateBalance = calculateRemainingAmount(loan);
-        loan.setRemainingBalance(updateBalance);
-        loanRepository.save(loan);
+        if (payment.getStatus().equals(PaymentStatus.SUCCESS)){
+            notificationService.debitAccountEvent(loan.getBankAccountRib(),payment.getAmountPaid());
+            Double updateBalance = calculateRemainingAmount(loan);
+            loan.setRemainingBalance(updateBalance);
+            loanRepository.save(loan);
+        }
     }
     @Override
     public void changePaymentStatus(Long id, ChangeStatusDTO statusDTO) {
