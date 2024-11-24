@@ -2,7 +2,6 @@ package net.banking.loanservice.dto.secrured_loan;
 
 import net.banking.loanservice.dto.external_services.Customer;
 import net.banking.loanservice.dto.loan_application.LoanApplicationDTO;
-import net.banking.loanservice.dto.payment.PaymentResponseDTO;
 import net.banking.loanservice.enums.LoanStatus;
 
 import java.time.LocalDate;
@@ -18,6 +17,5 @@ public record SecuredLoanResponse(
         LocalDate endDate,
         Double interest,
         LoanApplicationDTO loanApplication,
-        List<PaymentResponseDTO> payments,
         List<CollateralResponseDTO> collaterals,
         Customer customer) {}

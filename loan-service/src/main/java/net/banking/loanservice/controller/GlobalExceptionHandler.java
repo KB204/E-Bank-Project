@@ -3,6 +3,7 @@ package net.banking.loanservice.controller;
 import feign.FeignException;
 import net.banking.loanservice.dto.ErrorResponse;
 import net.banking.loanservice.exceptions.BankAccountException;
+import net.banking.loanservice.exceptions.FileHandlingException;
 import net.banking.loanservice.exceptions.ResourceAlreadyExists;
 import net.banking.loanservice.exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -51,6 +52,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         details.add(ex.getLocalizedMessage());
         ErrorResponse error = new ErrorResponse("Erreurs fonctionnelles", details);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(FileHandlingException.class)
+    final ResponseEntity<Object> handleFileHandlingException(FileHandlingException ex){
+        List<String> details = new ArrayList<>();
+        details.add(ex.getLocalizedMessage());
+        ErrorResponse error = new ErrorResponse("Erreurs techniques", details);
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @ExceptionHandler(FeignException.class)
     final ResponseEntity<Object> handleFeignException(FeignException ex) {
