@@ -1,6 +1,7 @@
 package net.banking.loanservice.service.specification;
 
 import net.banking.loanservice.entities.Loan;
+import net.banking.loanservice.entities.SecuredLoan;
 import net.banking.loanservice.entities.UnsecuredLoan;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
@@ -16,6 +17,9 @@ public class LoanSpecification {
     }
     public static Specification<Loan> unsecuredLoansOnly(){
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.type(), UnsecuredLoan.class);
+    }
+    public static Specification<Loan> securedLoanOnly(){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.type(), SecuredLoan.class);
     }
     public static Specification<Loan> identifierEqual(String identifier){
         return (root, query, criteriaBuilder) ->

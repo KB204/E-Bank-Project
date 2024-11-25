@@ -16,6 +16,7 @@ public record SecuredLoanResponse(
         LocalDate startedDate,
         LocalDate endDate,
         Double interest,
+        String bankAccountRib,
         LoanApplicationDTO loanApplication,
         List<CollateralResponseDTO> collaterals,
         Customer customer) {}

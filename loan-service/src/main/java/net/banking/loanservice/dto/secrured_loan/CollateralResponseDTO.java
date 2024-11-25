@@ -2,5 +2,4 @@ package net.banking.loanservice.dto.secrured_loan;
 
 import net.banking.loanservice.enums.CollateralType;
 
-public record CollateralResponseDTO(CollateralType type,boolean isVerified) {
-}
+public record CollateralResponseDTO(String url,String description,Boolean isVerified,Double value,CollateralType type) {}

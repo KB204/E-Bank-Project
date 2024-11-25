@@ -15,10 +15,13 @@ import net.banking.loanservice.enums.ApplicationStatus;
 import net.banking.loanservice.enums.LoanStatus;
 import net.banking.loanservice.exceptions.BankAccountException;
 import net.banking.loanservice.exceptions.FileHandlingException;
+import net.banking.loanservice.exceptions.ResourceAlreadyExists;
 import net.banking.loanservice.exceptions.ResourceNotFoundException;
 import net.banking.loanservice.mapper.LoanMapper;
 import net.banking.loanservice.service.specification.LoanSpecification;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -82,16 +85,24 @@ public class LoanServiceImpl implements LoanService{
     }
 
     @Override
-    public List<SecuredLoanResponse> findAllSecuredLoans() {
-        return loanRepository.findAll()
-                .stream()
-                .filter(loan -> loan instanceof SecuredLoan)
+    public Page<SecuredLoanResponse> findAllSecuredLoans(String identifier, Double amount, String status, String started,String ended,
+                                                         LocalDate start, LocalDate end, Pageable pageable) {
+
+        Specification<Loan> specification = Specification.where(LoanSpecification.securedLoanOnly())
+                .and(LoanSpecification.identifierEqual(identifier))
+                .and(LoanSpecification.amountEqual(amount))
+                .and(LoanSpecification.statusEqual(status))
+                .and(LoanSpecification.startedDateLike(started))
+                .and(LoanSpecification.endDateLike(ended))
+                .and(LoanSpecification.loanBetween(start, end));
+        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("startedDate").descending());
+
+        return loanRepository.findAll(specification,pageable)
                 .map(loan -> {
                     SecuredLoan securedLoan = (SecuredLoan) loan;
                     securedLoan.setCustomer(restClient.fetchCustomerByIdentity(securedLoan.getLoanApplication().getCustomerIdentity()));
                     return mapper.securedLoanToDtoResponse(securedLoan);
-                })
-                .toList();
+                });
     }
 
     @Override
@@ -117,11 +128,13 @@ public class LoanServiceImpl implements LoanService{
 
     @Override
     public void createSecuredLoan(SecuredLoanRequest request,List<MultipartFile> files) {
-        LoanApplication loanApplication = loanApplicationRepository.findByIdentifierIgnoreCase(request.identifier())
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("La demande identifiée par %s n'existe pas",request.identifier())));
-        BankAccount bankAccount = bankAccountRestClient.findBankAccount(request.rib(), request.identity());
-
+        LoanApplication loanApplication = getLoanApplication(request.identifier());
+        BankAccount bankAccount = getBankAccount(request.rib(),request.identity());
+        checkLoanAlreadyExists(request.identifier());
         checkBusinessRules(loanApplication);
+
+        String uploadDir = createUploadDirectory();
+        List<Collateral> collaterals = saveFiles(files,uploadDir,request);
 
         SecuredLoan loan = SecuredLoan.builder()
                 .status(LoanStatus.ACTIVE)
@@ -131,33 +144,17 @@ public class LoanServiceImpl implements LoanService{
                 .startedDate(LocalDate.now())
                 .bankAccountRib(bankAccount.rib())
                 .loanApplication(loanApplication)
-                .collaterals(List.of(Collateral.builder()
-                        .description(request.description())
-                        .type(request.type())
-                        .isVerified(request.isVerified())
-                        .value(request.value())
-                        .build()))
+                .collaterals(collaterals)
                 .build();
 
-        Double treat = calculateMonthlyInstallment(loan);
-        LocalDate endDate = calculateLoanEndingDate(loan);
-        String uploadDir = createUploadDirectory();
-        List<Collateral> collaterals = saveFiles(files,uploadDir);
-
-        loan.setMonthlyInstallment(treat);
-        loan.setEndDate(endDate);
-        loan.setCollaterals(collaterals);
-
-        checkBusinessRules(loan);
-        loanRepository.save(loan);
+        finalizeAndSaveLoan(loan);
     }
 
     @Override
     public void createUnsecuredLoan(UnsecuredLoanRequest request) {
-        LoanApplication loanApplication = loanApplicationRepository.findByIdentifierIgnoreCase(request.identifier())
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("La demande identifiée par %s n'existe pas",request.identifier())));
-        BankAccount bankAccount = bankAccountRestClient.findBankAccount(request.rib(), request.identity());
-
+        LoanApplication loanApplication = getLoanApplication(request.identifier());
+        BankAccount bankAccount = getBankAccount(request.rib(),request.identity());
+        checkLoanAlreadyExists(request.identifier());
         checkBusinessRules(loanApplication);
 
         UnsecuredLoan loan = UnsecuredLoan.builder()
@@ -170,13 +167,53 @@ public class LoanServiceImpl implements LoanService{
                 .loanApplication(loanApplication)
                 .build();
 
-        Double treat = calculateMonthlyInstallment(loan);
+        finalizeAndSaveLoan(loan);
+    }
+
+    @Override
+    public Resource getFile(String identifier, int fileIndex) {
+        SecuredLoan loan = (SecuredLoan) loanRepository.findByLoanApplication_Identifier(identifier)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("La demande identifiée par %s n'existe pas", identifier)));
+
+        List<Collateral> files = loan.getCollaterals();
+        if (fileIndex < 0 || fileIndex >= files.size()) {
+            throw new FileHandlingException("Fichier inexistant");
+        }
+
+        Collateral collateral = files.get(fileIndex);
+        Path filePath = Paths.get(collateral.getUrl());
+        Resource fileResource = new FileSystemResource(filePath);
+
+        if (!fileResource.exists()){
+            throw new FileHandlingException("Fichier inexistant");
+        }
+
+        return fileResource;
+    }
+
+    private LoanApplication getLoanApplication(String identifier) {
+        return loanApplicationRepository.findByIdentifierIgnoreCase(identifier)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        String.format("La demande identifiée par %s n'existe pas", identifier)));
+    }
+    private BankAccount getBankAccount(String rib, String identity) {
+        return bankAccountRestClient.findBankAccount(rib, identity);
+    }
+    private void checkLoanAlreadyExists(String identifier) {
+        loanRepository.findByLoanApplication_Identifier(identifier)
+                .ifPresent(loan -> {
+                    throw new ResourceAlreadyExists(
+                            String.format("Crédit identifié par %s exists déjà", identifier));
+                });
+    }
+    private void finalizeAndSaveLoan(Loan loan) {
+        Double monthlyInstallment = calculateMonthlyInstallment(loan);
         LocalDate endDate = calculateLoanEndingDate(loan);
 
-        loan.setMonthlyInstallment(treat);
+        loan.setMonthlyInstallment(monthlyInstallment);
         loan.setEndDate(endDate);
-        checkBusinessRules(loan);
 
+        checkBusinessRules(loan);
         loanRepository.save(loan);
     }
     private LocalDate calculateLoanEndingDate(Loan loan){
@@ -212,12 +249,12 @@ public class LoanServiceImpl implements LoanService{
             try {
                 Files.createDirectories(uploadPath);
             } catch (IOException e) {
-                throw new FileHandlingException("Failed to create upload directory: " + uploadDir);
+                throw new FileHandlingException("Erreur lors du stockage des fichiers: " + e.getMessage());
             }
         }
         return uploadDir;
     }
-    private List<Collateral> saveFiles(List<MultipartFile> files, String uploadLocation){
+    private List<Collateral> saveFiles(List<MultipartFile> files, String uploadLocation,SecuredLoanRequest request){
         List<Collateral> collaterals = new ArrayList<>();
         long totalSize = files.stream()
                 .mapToLong(MultipartFile::getSize)
@@ -234,7 +271,13 @@ public class LoanServiceImpl implements LoanService{
                         String storedFileName = System.currentTimeMillis() + "_" + originalFilename;
                         String filePath = Paths.get(uploadLocation, storedFileName).toString();
                         Files.copy(file.getInputStream(), Paths.get(filePath));
-                        return Collateral.builder().url(filePath).build();
+                        return Collateral.builder()
+                                .url(filePath)
+                                .description(request.description())
+                                .value(request.value())
+                                .isVerified(request.isVerified())
+                                .type(request.type())
+                                .build();
                     } catch (IOException ex){
                         throw new FileHandlingException("Erreur lors du stockage des fichiers: " + ex.getMessage());
                     }
