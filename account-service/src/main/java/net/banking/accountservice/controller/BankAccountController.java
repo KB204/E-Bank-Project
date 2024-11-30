@@ -12,12 +12,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequestMapping("/api/accounts")
-@CrossOrigin(origins = "http://localhost:3000")
+@PreAuthorize("hasAuthority('AGENT')")
 public class BankAccountController {
     private final BankAccountService bankAccountService;
     public BankAccountController(BankAccountService bankAccountService) {

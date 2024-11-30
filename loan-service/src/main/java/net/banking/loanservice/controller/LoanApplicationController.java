@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -21,6 +22,7 @@ public class LoanApplicationController {
     }
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('AGENT')")
     public Page<LoanApplicationResponse> findAllLoansApplications(
             @RequestParam(required = false) String identifier,
             @RequestParam(required = false) String loanType,
@@ -40,21 +42,25 @@ public class LoanApplicationController {
         return ResponseEntity.ok(response);
     }
     @PostMapping
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<String> saveNewLoanApplication(@RequestBody @Valid LoanApplicationRequest request) {
         service.createNewLoanApplication(request);
         return new ResponseEntity<>("Votre demande de crédit a été transmise avec succès. Vous serez informé par email pour obtenir les détails de votre demande",HttpStatus.CREATED);
     }
     @PostMapping("/approveLoanApplication/{identity}")
+    @PreAuthorize("hasAuthority('AGENT')")
     public ResponseEntity<String> approveLoanApplication(@PathVariable String identity){
         service.approveLoanApplication(identity);
         return new ResponseEntity<>("Demande de crédit a été accepté avec succès",HttpStatus.ACCEPTED);
     }
     @PostMapping("/declineLoanApplication/{identity}")
+    @PreAuthorize("hasAuthority('AGENT')")
     public ResponseEntity<String> rejectLoanApplication(@PathVariable String identity){
         service.declineLoanApplication(identity);
         return new ResponseEntity<>("Demande de crédit a été rejetée",HttpStatus.ACCEPTED);
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('AGENT')")
     public ResponseEntity<LoanApplicationResponse> removeLoanApplicationFromDb(@PathVariable Long id){
         service.removeLoanApplication(id);
         return ResponseEntity.noContent().build();

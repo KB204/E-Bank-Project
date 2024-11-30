@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -23,6 +24,7 @@ public class PaymentController {
     }
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('AGENT')")
     Page<PaymentResponse> findAllLoansPayments(
             @RequestParam(required = false) Double amount,
             @RequestParam(required = false) Double minAmount,
@@ -49,6 +51,7 @@ public class PaymentController {
         return service.loanPaymentHistory(identifier, amount, status, date, pageable);
     }
     @PutMapping("{id}/changePaymentStatus")
+    @PreAuthorize("hasAuthority('AGENT')")
     ResponseEntity<String> updateLoanPaymentStatus(@PathVariable Long id,@RequestBody @Valid ChangeStatusDTO request){
         service.changePaymentStatus(id, request);
         return new ResponseEntity<>("Paiment a été modifié avec succès",HttpStatus.ACCEPTED);

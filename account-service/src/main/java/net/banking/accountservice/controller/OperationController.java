@@ -8,12 +8,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/operations")
-@CrossOrigin(origins = "http://localhost:3000")
 public class OperationController {
     private final OperationService service;
 
@@ -22,6 +22,7 @@ public class OperationController {
     }
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('AGENT')")
     public Page<OperationResponse> findAllOperations(
             @RequestParam(required = false) Double amount,
             @RequestParam(required = false) Double minAmount,
@@ -46,21 +47,25 @@ public class OperationController {
             Pageable pageable){
         return service.bankAccountHistory(rib, amount, transactionType, startDate, endDate, pageable); }
     @PostMapping("/newPayment")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<String> makeNewOperation(@RequestParam String rib,@RequestBody @Valid OperationRequest request) {
         service.transferOperation(rib, request);
         return new ResponseEntity<>("Le code de vérification a été envoyé à votre adresse e-mail",HttpStatus.CREATED);
     }
     @PostMapping("/completeNewPayment")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<String> completeNewTransferOperation(@RequestParam String rib,@RequestBody @Valid CompleteOperationDTO request) {
         service.completeTransferOperation(rib, request);
         return new ResponseEntity<>(String.format("Virement du montant %s en faveur de %s par %s a été effectué avec succès",request.amount(),request.ribTo(),rib),HttpStatus.CREATED);
     }
     @PostMapping("/newWithdrawal")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<String> makeNewWithdrawal(@RequestParam String rib,@RequestBody @Valid WithdrawRequest request) {
         service.withdrawalOperation(rib, request);
         return new ResponseEntity<>("Le code de vérification a été envoyé à votre adresse e-mail",HttpStatus.CREATED);
     }
     @PostMapping("/completeNewWithdraw")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<String> completeNewWithdrawalOperation(@RequestParam String rib, @RequestBody @Valid CompleteWithdrawDTO request) {
         service.completeWithdrawalOperation(rib, request);
         return new ResponseEntity<>(String.format("Retrait du montant %s a été effectué avec succès",request.amount()),HttpStatus.CREATED);
