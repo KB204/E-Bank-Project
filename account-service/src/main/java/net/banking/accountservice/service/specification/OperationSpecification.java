@@ -60,6 +60,6 @@ public class OperationSpecification {
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(createdAt)
                         .map(date -> criteriaBuilder.like(root.get("createdAt").as(String.class),createdAt + "%"))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
 }

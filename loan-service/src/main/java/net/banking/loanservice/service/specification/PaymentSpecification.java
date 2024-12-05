@@ -14,13 +14,13 @@ public class PaymentSpecification {
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(identifier)
                         .map(loan -> criteriaBuilder.equal(root.get("loan").get("loanApplication").get("identifier"),identifier))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Payment> amountEqual(Double amount){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(amount)
                         .map(paidAmount -> criteriaBuilder.equal(root.get("amountPaid"),amount))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Payment> amountBetween(Double minAmount,Double maxAmount){
         return (root, query, criteriaBuilder) ->
@@ -32,12 +32,12 @@ public class PaymentSpecification {
                 Optional.ofNullable(status)
                         .map(paymentStatus -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("status")),
                                 status.toLowerCase()))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Payment> dateLike(String date){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(date)
                         .map(paymentDate -> criteriaBuilder.like(root.get("paymentDate").as(String.class),date + "%"))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
 }

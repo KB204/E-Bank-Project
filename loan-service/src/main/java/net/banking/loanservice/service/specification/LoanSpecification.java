@@ -25,32 +25,32 @@ public class LoanSpecification {
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(identifier)
                         .map(loan -> criteriaBuilder.equal(root.get("loanApplication").get("identifier"),identifier))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Loan> amountEqual(Double amount){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(amount)
                         .map(loan -> criteriaBuilder.equal(root.get("principleAmount"),amount))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Loan> statusEqual(String status){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(status)
                         .map(loan -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("status")),
                                 status.toLowerCase()))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Loan> startedDateLike(String started){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(started)
                         .map(date -> criteriaBuilder.like(root.get("startedDate").as(String.class),started + "%"))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Loan> endDateLike(String ended){
         return (root, query, criteriaBuilder) ->
                 Optional.ofNullable(ended)
                         .map(date -> criteriaBuilder.like(root.get("endDate").as(String.class),ended + "%"))
-                        .orElse(null);
+                        .orElse(criteriaBuilder.conjunction());
     }
     public static Specification<Loan> loanBetween(LocalDate start, LocalDate end) {
         return (root, query, criteriaBuilder) -> {
