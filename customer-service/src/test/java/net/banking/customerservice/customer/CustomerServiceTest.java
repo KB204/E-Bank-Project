@@ -1,5 +1,14 @@
 package net.banking.customerservice.customer;
 
+import net.banking.customerservice.dao.CustomerRepository;
+import net.banking.customerservice.dto.CustomerDtoRequest;
+import net.banking.customerservice.dto.CustomerDtoResponse;
+import net.banking.customerservice.dto.UpdateCustomerDto;
+import net.banking.customerservice.entites.Customer;
+import net.banking.customerservice.exceptions.ResourceAlreadyExists;
+import net.banking.customerservice.exceptions.ResourceNotFoundException;
+import net.banking.customerservice.mapper.CustomerMapper;
+import net.banking.customerservice.service.CustomerServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,11 +34,11 @@ class CustomerServiceTest {
     @Test
     void shouldCreateNewCustomer() {
         CustomerDtoRequest customerDTO = CustomerDtoRequest.builder()
-                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25))
                 .build();
         Customer customer = Customer.builder()
-                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25))
                 .build();
         Mockito.when(repository.findByIdentityIgnoreCase(customerDTO.identity())).thenReturn(Optional.empty());
@@ -43,11 +52,11 @@ class CustomerServiceTest {
     @Test
     void shouldNotCreateNewCustomerWhenExistingIdentity(){
         CustomerDtoRequest customerDTO = CustomerDtoRequest.builder()
-                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25))
                 .build();
         Customer customer = Customer.builder()
-                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25))
                 .build();
         Mockito.when(repository.findByIdentityIgnoreCase(customerDTO.identity())).thenReturn(Optional.of(customer));
@@ -57,11 +66,11 @@ class CustomerServiceTest {
     @Test
     void shouldNotCreateNewCustomerWhenExistingEmail(){
         CustomerDtoRequest customerDTO = CustomerDtoRequest.builder()
-                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25))
                 .build();
         Customer customer = Customer.builder()
-                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25))
                 .build();
         Mockito.when(repository.findByEmailIgnoreCase(customerDTO.email())).thenReturn(Optional.of(customer));
@@ -71,11 +80,11 @@ class CustomerServiceTest {
     /*@Test
     void shouldGetAllCustomers() {
         List<Customer> customers = List.of(
-                Customer.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                Customer.builder().firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                         .birth(LocalDate.of(2020,2,25)).build()
         );
         List<CustomerDtoResponse> responses = List.of(
-                CustomerDtoResponse.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                CustomerDtoResponse.builder().firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                         .birth(LocalDate.of(2020,2,25)).build()
         );
         Mockito.when(repository.findAll()).thenReturn(customers);
@@ -88,9 +97,9 @@ class CustomerServiceTest {
     @Test
     void shouldFindCustomerByIdentity() {
         String identity = "RG45";
-        Customer customer = Customer.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+        Customer customer = Customer.builder().firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25)).build();
-        CustomerDtoResponse customerDTO = CustomerDtoResponse.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+        CustomerDtoResponse customerDTO = CustomerDtoResponse.builder().firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25)).build();
         Mockito.when(repository.findByIdentityIgnoreCase(identity)).thenReturn(Optional.of(customer));
         Mockito.when(mapper.customerToDtoResponse(customer)).thenReturn(customerDTO);
@@ -110,10 +119,10 @@ class CustomerServiceTest {
     void shouldUpdateExistingCustomerByIdentity() {
         String identity = "RG45";
         UpdateCustomerDto customerDTO = UpdateCustomerDto.builder()
-                .email("karim@gmail.com").address("Tanger")
+                .email("user@gmail.com").address("Tanger")
                 .build();
         Customer customer = Customer.builder()
-                .email("karim@gmail.com").address("Tanger")
+                .email("user@gmail.com").address("Tanger")
                 .build();
         Mockito.when(repository.findByIdentityIgnoreCase(identity)).thenReturn(Optional.of(customer));
         Mockito.when(repository.save(customer)).thenReturn(customer);
@@ -125,7 +134,7 @@ class CustomerServiceTest {
     void shouldDeleteCustomerByIdentity() {
         String identity = "TT";
         Customer customer = Customer.builder()
-                .firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com").address("Tanger")
+                .firstname("user").lastname("user").identity("Test").email("user@gmail.com").address("Tanger")
                 .birth(LocalDate.of(2020,2,25))
                 .build();
         Mockito.when(repository.findByIdentityIgnoreCase(identity)).thenReturn(Optional.of(customer));

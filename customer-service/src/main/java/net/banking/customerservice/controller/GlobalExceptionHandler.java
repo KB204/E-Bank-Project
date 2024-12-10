@@ -1,5 +1,8 @@
-package net.banking.customerservice.customer;
+package net.banking.customerservice.controller;
 
+import net.banking.customerservice.exceptions.ResourceAlreadyExists;
+import net.banking.customerservice.exceptions.ResourceNotFoundException;
+import net.banking.customerservice.dto.ErrorResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ControllerAdvice
-class ExceptionHandlerController extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers,
                                                                   HttpStatusCode status, WebRequest request) {

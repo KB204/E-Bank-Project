@@ -1,4 +1,4 @@
-package net.banking.customerservice.customer;
+package net.banking.customerservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -7,7 +7,7 @@ import lombok.Builder;
 
 import java.time.LocalDate;
 @Builder
-record CustomerDtoRequest(
+public record CustomerDtoRequest(
         @NotEmpty(message = "Le prénom est obligatoire")
         String firstname,
         @NotEmpty(message = "Le Nom est obligatoire")

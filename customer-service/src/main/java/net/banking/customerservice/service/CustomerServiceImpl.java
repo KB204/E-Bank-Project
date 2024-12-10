@@ -1,5 +1,13 @@
-package net.banking.customerservice.customer;
+package net.banking.customerservice.service;
 
+import net.banking.customerservice.exceptions.ResourceAlreadyExists;
+import net.banking.customerservice.exceptions.ResourceNotFoundException;
+import net.banking.customerservice.dto.UpdateCustomerDto;
+import net.banking.customerservice.dao.CustomerRepository;
+import net.banking.customerservice.dto.CustomerDtoRequest;
+import net.banking.customerservice.dto.CustomerDtoResponse;
+import net.banking.customerservice.entites.Customer;
+import net.banking.customerservice.mapper.CustomerMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -7,7 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
-class CustomerServiceImpl implements CustomerService{
+public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
 

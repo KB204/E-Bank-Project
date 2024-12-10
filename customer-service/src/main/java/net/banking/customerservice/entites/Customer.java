@@ -1,4 +1,4 @@
-package net.banking.customerservice.customer;
+package net.banking.customerservice.entites;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @Data
 @Builder
 @Document(collection = "customers")
-class Customer {
+public class Customer {
     @Id
     private String id;
     private String firstname;

@@ -1,11 +1,11 @@
-package net.banking.customerservice.customer;
+package net.banking.customerservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 
 @Builder
-record UpdateCustomerDto(
+public record UpdateCustomerDto(
         @NotEmpty(message = "L'email est obligatoire")
         @Email(message = "Format d'email invalid")
         String email,

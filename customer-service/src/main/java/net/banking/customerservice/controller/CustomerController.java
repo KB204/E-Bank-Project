@@ -1,6 +1,10 @@
-package net.banking.customerservice.customer;
+package net.banking.customerservice.controller;
 
 import jakarta.validation.Valid;
+import net.banking.customerservice.dto.CustomerDtoRequest;
+import net.banking.customerservice.dto.CustomerDtoResponse;
+import net.banking.customerservice.service.CustomerService;
+import net.banking.customerservice.dto.UpdateCustomerDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -11,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/customers")
 @PreAuthorize("hasAuthority('AGENT')")
-class CustomerController {
+public class CustomerController {
     private final CustomerService service;
 
     CustomerController(CustomerService service) {

@@ -1,5 +1,8 @@
 package net.banking.customerservice.customer;
 
+import net.banking.customerservice.dto.CustomerDtoRequest;
+import net.banking.customerservice.dto.CustomerDtoResponse;
+import net.banking.customerservice.service.CustomerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +19,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
-import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -36,7 +38,7 @@ public class CustomerTestIntegration {
     }
     @BeforeEach
     void setUp() {
-        customers.createNewCustomer(CustomerDtoRequest.builder().firstname("karim").lastname("karim").identity("Test").email("karim@gmail.com")
+        customers.createNewCustomer(CustomerDtoRequest.builder().firstname("user").lastname("user").identity("Test").email("user@gmail.com")
                         .address("Tanger").birth(LocalDate.of(2020,2,25)).build());
         customers.createNewCustomer(CustomerDtoRequest.builder().firstname("xx").lastname("xx").identity("xx").email("x@gmail.com")
                 .address("Tanger").birth(LocalDate.of(2020,2,25)).build());
@@ -59,7 +61,7 @@ public class CustomerTestIntegration {
     void shouldGetCustomerByIdentity() {
         String identity = "Test";
         ResponseEntity<CustomerDtoResponse> response = rest
-                .exchange("/api/customers/{identity}",HttpMethod.GET,null,CustomerDtoResponse.class,identity);
+                .exchange("/api/customers/{identity}",HttpMethod.GET,null, CustomerDtoResponse.class,identity);
         CustomerDtoResponse content = response.getBody();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(content).isNotNull();

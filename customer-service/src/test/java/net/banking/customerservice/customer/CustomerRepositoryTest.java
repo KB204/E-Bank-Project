@@ -1,5 +1,7 @@
 package net.banking.customerservice.customer;
 
+import net.banking.customerservice.dao.CustomerRepository;
+import net.banking.customerservice.entites.Customer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +35,9 @@ class CustomerRepositoryTest {
         repository.deleteAll();
         System.out.println("-------------------------------------------");
         this.customers = List.of(
-                Customer.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com")
+                Customer.builder().firstname("user").lastname("user").identity("Test").email("user@gmail.com")
                         .birth(LocalDate.of(2002,11,28)).address("rabat").build(),
-                Customer.builder().firstname("med").lastname("bammou").identity("Test1").email("med@gmail.com")
+                Customer.builder().firstname("user2").lastname("user2").identity("Test1").email("user2@gmail.com")
                         .birth(LocalDate.of(2000,11,28)).address("rabat").build(),
                 Customer.builder().firstname("chrif").lastname("chrif").identity("Test2").email("chrif@gmail.com")
                         .birth(LocalDate.of(1999,1,1)).address("meknes").build()

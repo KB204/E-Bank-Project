@@ -1,6 +1,12 @@
 package net.banking.customerservice.customer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.banking.customerservice.controller.CustomerController;
+import net.banking.customerservice.dto.CustomerDtoRequest;
+import net.banking.customerservice.dto.CustomerDtoResponse;
+import net.banking.customerservice.dto.UpdateCustomerDto;
+import net.banking.customerservice.exceptions.ResourceNotFoundException;
+import net.banking.customerservice.service.CustomerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -30,7 +36,7 @@ class CustomerControllerTest {
     @BeforeEach
     void setUp() {
         this.customers = List.of(
-                CustomerDtoResponse.builder().firstname("karim").lastname("bammou").identity("Test").email("karim@gmail.com")
+                CustomerDtoResponse.builder().firstname("user1").lastname("user").identity("Test").email("user@gmail.com")
                         .address("Tanger").birth(LocalDate.of(2020,2,25)).build(),
                 CustomerDtoResponse.builder().firstname("xx").lastname("xx").identity("Testx").email("x@gmail.com")
                         .address("Tanger").birth(LocalDate.of(2020,2,25)).build()
